@@ -108,6 +108,19 @@ function formatEventDateTime(eventDate, eventTime) {
   return `${dateLabel} • ${eventTime || 'Time TBA'}`;
 }
 
+function formatEventDateTimeCompact(eventDate, eventTime) {
+  if (!eventDate && !eventTime) return 'Date and time TBA';
+  const parsed = parseEventDate(eventDate);
+  const dateLabel = parsed
+    ? parsed.toLocaleDateString('en-CA', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })
+    : 'Date TBA';
+  return `${dateLabel} - ${eventTime || 'Time TBA'}`;
+}
+
 function slugifySection(title) {
   return `section-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 }
@@ -116,22 +129,36 @@ function Header({ scrolled }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'border-b border-[#E5E7EB] bg-white/95 backdrop-blur' : 'bg-transparent'
+        scrolled ? 'border-b border-black/5 bg-white/70 backdrop-blur' : 'bg-transparent'
       }`}
     >
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-12">
-        <span className="text-xs font-bold tracking-[0.2em] text-[#111827]">CU-THERE</span>
+        <span
+          className={`inline-flex items-center rounded-full border px-4 py-1.5 text-xs font-bold tracking-[0.2em] ${
+            scrolled ? 'border-[#E5E7EB] bg-white text-[#111827]' : 'border-[#E5E7EB] bg-white text-[#111827]'
+          }`}
+        >
+          CU THERE
+        </span>
 
         <div className="ml-auto flex items-center gap-2">
           <a
             href="/about"
-            className="rounded-full border border-[#D1D5DB] bg-white/70 px-4 py-2 text-sm font-medium text-[#111827] transition hover:border-[#6B7280]"
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+              scrolled
+                ? 'border-[#D1D5DB] bg-white/85 text-[#111827] hover:border-[#9CA3AF]'
+                : 'border-white/35 bg-white/10 text-white hover:border-white/60'
+            }`}
           >
             About
           </a>
           <a
             href="/feedback"
-            className="rounded-full border border-[#D1D5DB] bg-white/70 px-4 py-2 text-sm font-medium text-[#111827] transition hover:border-[#6B7280]"
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+              scrolled
+                ? 'border-[#D1D5DB] bg-white/85 text-[#111827] hover:border-[#9CA3AF]'
+                : 'border-white/35 bg-white/10 text-white hover:border-white/60'
+            }`}
           >
             Feedback
           </a>
@@ -142,34 +169,47 @@ function Header({ scrolled }) {
 }
 
 function Hero() {
+  const ACCENT_RED = '#CF142B';
+
   return (
-    <section className="relative h-[90vh] min-h-[680px] w-full overflow-hidden">
-      <img src="/image.png" alt="Carleton University campus" className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-white" />
+    <section className="relative w-full overflow-hidden" style={{ minHeight: '90vh' }}>
+      {/* 1. Base Image */}
+      <img
+        src="/image.png"
+        alt="Carleton University campus"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
 
-      <div className="relative z-10 flex h-full flex-col justify-between px-4 pb-20 pt-24 sm:px-6 lg:px-12">
-        <span className="inline-flex w-fit items-center rounded-full border border-[#E5E7EB] bg-white/70 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-[#111827] backdrop-blur">
-          CU-THERE
-        </span>
+      {/* 2. Horizontal Scrim (The Fix for Legibility) */}
+      {/* This creates a dark fade from the left to make white text pop */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent z-0" />
 
-        <div className="max-w-4xl">
-          <h1 className="text-4xl font-extrabold leading-[1.05] text-[#111827] sm:text-5xl md:text-6xl lg:text-7xl">
-            Discover What&apos;s Happening on Campus
-          </h1>
-          <p className="mt-4 max-w-2xl text-base text-[#6B7280] md:text-lg">
-            Your one-stop hub for Carleton University events. Find clubs, workshops, parties, career fairs, and
-            everything in between.
-          </p>
+      {/* 3. Bottom Fade-to-White */}
+      <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-white via-white/80 to-transparent z-[5]" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-40 pt-36 md:px-10 md:pb-48 md:pt-44">
+
+        <h1
+          className="max-w-3xl text-5xl font-black leading-[1.1] text-white sm:text-6xl md:text-7xl"
+          style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
+        >
+          Discover the Best of Carleton.
+        </h1>
+        
+        <p
+          className="mt-6 max-w-xl text-lg font-medium text-white/95 md:text-xl"
+          style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
+        >
+          From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
+        </p>
+
+        <div className="mt-10">
           <button
             type="button"
-            onClick={() => document.getElementById('events-anchor')?.scrollIntoView({ behavior: 'smooth' })}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#CF142B] px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#B50F25] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B]"
+            onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-bold text-white shadow-2xl transition-all hover:scale-105 active:scale-95"
+            style={{ backgroundColor: ACCENT_RED }}
           >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-              <circle cx="10" cy="10" r="5" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M14.5 14.5L20 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <path d="M10 7.7v4.6M7.7 10h4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
             Explore Events
           </button>
         </div>
@@ -205,7 +245,7 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
           <button
             key={pill}
             onClick={() => onPillClick(pill)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B] ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B] ${
               activePill === pill
                 ? 'border-[#CF142B] bg-[#CF142B]/5 text-[#CF142B]'
                 : 'border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]'
@@ -220,26 +260,43 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
   );
 }
 
-function EventCarouselCard({ event }) {
+function EventCarouselCard({ event, sectionTitle }) {
   const href = event?.id && !event?.isMock ? `/events/${event.id}` : '#';
   const imageSource = event?.image_url || '/image.png';
   const eventDate = parseEventDate(event?.date);
   const today = startOfDay(new Date());
-  const isTodayEvent = eventDate ? isSameDay(eventDate, today) : false;
+  const isTodaySection = sectionTitle === 'Today';
 
   return (
     <a
       href={href}
-      className="group block w-72 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm transition hover:-translate-y-0.5"
+      className="group block w-72 shrink-0 overflow-hidden rounded-[12px] border border-[#E5E7EB] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5"
       aria-label={`Open event: ${event?.title || 'Untitled event'}`}
     >
-      <img src={imageSource} alt={event?.title || 'Event image'} className="h-40 w-full object-cover" />
+      <div className="relative h-40 w-full overflow-hidden border-b border-[#F3F4F6] bg-[#F3F4F6]">
+        <img src={imageSource} alt={event?.title || 'Event image'} className="h-full w-full object-cover" />
+        {isTodaySection && (
+          <span className="absolute left-3 top-3 rounded-full bg-[#CF142B] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white">
+            ● TODAY
+          </span>
+        )}
+      </div>
       <div className="space-y-2 p-4">
         <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
-        <p className="text-sm font-semibold text-[#CF142B]">
-          {isTodayEvent ? 'LIVE TODAY' : formatEventDateTime(event?.date, event?.time)}
+        <p className="text-sm font-semibold text-[#CF142B]">{formatEventDateTimeCompact(event?.date, event?.time)}</p>
+        <p className="inline-flex line-clamp-1 items-center gap-1.5 text-sm text-[#4B5563]">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#6B7280]" fill="none" aria-hidden="true">
+            <path
+              d="M12 21s6-5.8 6-11a6 6 0 10-12 0c0 5.2 6 11 6 11z"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.7" />
+          </svg>
+          {event?.location || 'Carleton University Campus'}
         </p>
-        <p className="line-clamp-1 text-sm text-[#6B7280]">{event?.location || 'Carleton University Campus'}</p>
       </div>
     </a>
   );
@@ -263,7 +320,7 @@ function EventSection({ title, sectionId, events }) {
       ) : (
         <div className="thin-scrollbar flex gap-4 overflow-x-auto pb-2">
           {events.map((event, index) => (
-            <EventCarouselCard key={`${title}-${event.id || index}`} event={event} />
+            <EventCarouselCard key={`${title}-${event.id || index}`} event={event} sectionTitle={title} />
           ))}
         </div>
       )}
@@ -394,7 +451,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-white pb-12 text-[#111827]">
+    <main className="min-h-screen bg-[#FDFBF7] pb-12 text-[#111827]">
       <Header scrolled={scrolled} />
       <Hero />
       <SearchAndPills
