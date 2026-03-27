@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import EventCard from '@/components/EventCard';
+
+const TODAY_DATE = new Date().toISOString().slice(0, 10);
 
 const TEST_EVENT = {
   id: 'test-event-001',
   title: 'CCSS Networking Night',
   description: 'Come to a night of networking and fun with alumni, recruiters, and student leaders.',
-  date: '2026-10-25',
+  date: TODAY_DATE,
   time: '6:00 PM',
   location: 'UC Atrium',
   image_url: '',
@@ -15,8 +18,22 @@ const TEST_EVENT = {
   isMock: true,
 };
 
+const TODAY_EVENT_TWO = {
+  id: 'test-event-002',
+  title: 'Quad Coffee Chat',
+  description: 'Drop by for coffee, meet new students, and discover clubs around campus.',
+  date: TODAY_DATE,
+  time: '2:00 PM',
+  location: 'Carleton Quad',
+  image_url: '',
+  tags: ['Social', 'Wellness'],
+  category: 'Social',
+  isMock: true,
+};
+
 const LOCAL_FALLBACK_EVENTS = [
   TEST_EVENT,
+  TODAY_EVENT_TWO,
   {
     id: 'local-2',
     title: 'Design Sprint Workshop',
@@ -67,7 +84,7 @@ const LOCAL_FALLBACK_EVENTS = [
   },
 ];
 
-const DEFAULT_TAG_PILLS = ['All', 'Academic', 'Social', 'Sports', 'Career', 'Cultural', 'Wellness', 'Tech'];
+const DEFAULT_TAG_PILLS = ['All', 'Today', 'This Week', 'Academic', 'Social', 'Sports', 'Career', 'Cultural', 'Wellness', 'Tech'];
 
 function parseEventDate(dateString) {
   if (!dateString) return null;
@@ -106,19 +123,6 @@ function formatEventDateTime(eventDate, eventTime) {
       })
     : 'Date TBA';
   return `${dateLabel} • ${eventTime || 'Time TBA'}`;
-}
-
-function formatEventDateTimeCompact(eventDate, eventTime) {
-  if (!eventDate && !eventTime) return 'Date and time TBA';
-  const parsed = parseEventDate(eventDate);
-  const dateLabel = parsed
-    ? parsed.toLocaleDateString('en-CA', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
-    : 'Date TBA';
-  return `${dateLabel} - ${eventTime || 'Time TBA'}`;
 }
 
 function slugifySection(title) {
@@ -220,7 +224,7 @@ function Hero() {
 
 function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
   return (
-    <section id="events-anchor" className="px-4 py-6 sm:px-6 lg:px-12">
+    <section id="events-anchor" className="px-4 pb-8 pt-16 sm:px-6 sm:pt-20 lg:px-12">
       <div className="relative">
         <svg
           className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9CA3AF]"
@@ -240,15 +244,15 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
         />
       </div>
 
-      <div className="thin-scrollbar mt-4 flex gap-3 overflow-x-auto pb-1">
+      <div className="thin-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1">
         {pills.map((pill) => (
           <button
             key={pill}
             onClick={() => onPillClick(pill)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B] ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B] ${
               activePill === pill
-                ? 'border-[#CF142B] bg-[#CF142B]/5 text-[#CF142B]'
-                : 'border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]'
+                ? 'border-[#D1D5DB] bg-white text-[#111827]'
+                : 'border-[#E5E7EB] bg-transparent text-[#1F2937] hover:border-[#9CA3AF]'
             }`}
             aria-pressed={activePill === pill}
           >
@@ -260,67 +264,56 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
   );
 }
 
-function EventCarouselCard({ event, sectionTitle }) {
-  const href = event?.id && !event?.isMock ? `/events/${event.id}` : '#';
-  const imageSource = event?.image_url || '/image.png';
-  const eventDate = parseEventDate(event?.date);
-  const today = startOfDay(new Date());
-  const isTodaySection = sectionTitle === 'Today';
-
-  return (
-    <a
-      href={href}
-      className="group block w-72 shrink-0 overflow-hidden rounded-[12px] border border-[#E5E7EB] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5"
-      aria-label={`Open event: ${event?.title || 'Untitled event'}`}
-    >
-      <div className="relative h-40 w-full overflow-hidden border-b border-[#F3F4F6] bg-[#F3F4F6]">
-        <img src={imageSource} alt={event?.title || 'Event image'} className="h-full w-full object-cover" />
-        {isTodaySection && (
-          <span className="absolute left-3 top-3 rounded-full bg-[#CF142B] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white">
-            ● TODAY
-          </span>
-        )}
-      </div>
-      <div className="space-y-2 p-4">
-        <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
-        <p className="text-sm font-semibold text-[#CF142B]">{formatEventDateTimeCompact(event?.date, event?.time)}</p>
-        <p className="inline-flex line-clamp-1 items-center gap-1.5 text-sm text-[#4B5563]">
-          <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#6B7280]" fill="none" aria-hidden="true">
-            <path
-              d="M12 21s6-5.8 6-11a6 6 0 10-12 0c0 5.2 6 11 6 11z"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.7" />
-          </svg>
-          {event?.location || 'Carleton University Campus'}
-        </p>
-      </div>
-    </a>
-  );
-}
-
 function EventSection({ title, sectionId, events }) {
+  const carouselId = `${sectionId}-carousel`;
+  const scrollByAmount = 320;
+
+  function scrollCarousel(direction) {
+    const element = document.getElementById(carouselId);
+    if (!element) return;
+    element.scrollBy({ left: direction * scrollByAmount, behavior: 'smooth' });
+  }
+
   return (
     <section id={sectionId} className="scroll-mt-24 px-4 py-5 sm:px-6 lg:px-12">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="text-2xl font-extrabold text-[#111827]">
-          {title}
-          <span className="ml-2 text-sm font-medium text-[#6B7280]">• {events.length} events</span>
-        </h2>
-        <a href={sectionId ? `#${sectionId}` : '#'} className="text-sm font-semibold text-[#CF142B] hover:text-[#B50F25]">
-          See All
-        </a>
+        <div className="inline-flex items-center gap-2">
+          <h2 className="text-2xl font-black text-[#111827]">{title}</h2>
+          <span className="text-sm font-medium text-[#9CA3AF]">• {events.length} events</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scrollCarousel(-1)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
+            aria-label={`Scroll ${title} events left`}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollCarousel(1)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
+            aria-label={`Scroll ${title} events right`}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <a href={sectionId ? `#${sectionId}` : '#'} className="ml-1 text-sm font-semibold text-[#D71920] hover:text-[#BE161C]">
+            See All
+          </a>
+        </div>
       </div>
 
       {events.length === 0 ? (
         <p className="text-sm text-[#6B7280]">No events in this section right now.</p>
       ) : (
-        <div className="thin-scrollbar flex gap-4 overflow-x-auto pb-2">
+        <div id={carouselId} className="thin-scrollbar flex gap-3 overflow-x-auto pb-2">
           {events.map((event, index) => (
-            <EventCarouselCard key={`${title}-${event.id || index}`} event={event} sectionTitle={title} />
+            <EventCard key={`${title}-${event.id || index}`} event={event} />
           ))}
         </div>
       )}
@@ -346,7 +339,7 @@ export default function HomePage() {
             category: event.category || event.source_platform || 'Academic',
             tags: event.tags || [event.category || event.source_platform || 'Academic'],
           }));
-          setEvents([TEST_EVENT, ...normalized]);
+          setEvents([TEST_EVENT, TODAY_EVENT_TWO, ...normalized]);
         } else {
           setEvents(LOCAL_FALLBACK_EVENTS);
         }
@@ -428,7 +421,7 @@ export default function HomePage() {
     const weekEvents = sorted.filter((event) => {
       const eventDate = parseEventDate(event?.date);
       if (!eventDate) return false;
-      return eventDate > today && eventDate <= weekEnd;
+      return eventDate >= today && eventDate <= weekEnd;
     });
 
     const tagSections = activeTags.map((tag) => ({
@@ -451,7 +444,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FDFBF7] pb-12 text-[#111827]">
+    <main className="min-h-screen bg-[#FCFAF7] pb-12 text-[#111827]">
       <Header scrolled={scrolled} />
       <Hero />
       <SearchAndPills
