@@ -19,3 +19,5 @@ cuThere/
 ├── .env                                  (APIFY_TOKEN, etc.)
 ├── readme.txt
 └── package.json
+
+note: find a better method to verify an event

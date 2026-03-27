@@ -29,30 +29,37 @@ export default function EventDetailPage() {
         setEvent(await res.json());
     }
 
-    if (loading) return <main><p>Loading…</p></main>;
-    if (!event || event.error) return <main><p>Event not found.</p></main>;
+    if (loading) return <main className="mx-auto max-w-4xl p-8 [font-family:var(--font-brand-sans)]"><p>Loading...</p></main>;
+    if (!event || event.error) return <main className="mx-auto max-w-4xl p-8 [font-family:var(--font-brand-sans)]"><p>Event not found.</p></main>;
 
     return (
-        <main>
-            <a href="/" className="back-link">← Back to events</a>
-            <h1>{event.title}</h1>
+        <main className="mx-auto max-w-4xl space-y-5 px-4 py-8 sm:px-6 [font-family:var(--font-brand-sans)]">
+            <a href="/" className="inline-flex rounded-md border border-black px-3 py-1.5 text-sm font-medium text-black hover:bg-black hover:text-white">
+                ← Back to events
+            </a>
+            <h1 className="text-3xl font-bold text-black [font-family:var(--font-brand-serif)]">{event.title}</h1>
 
             {event.image_url && (
-                <img src={event.image_url} alt={event.title} className="detail-img" />
+                <img src={event.image_url} alt={event.title} className="h-64 w-full rounded-xl border border-black object-cover sm:h-80" />
             )}
 
-            {event.date && <p><strong>Date:</strong> {event.date}</p>}
-            {event.time && <p><strong>Time:</strong> {event.time}</p>}
-            {event.location && <p><strong>Location:</strong> {event.location}</p>}
-            {event.description && <p style={{ marginTop: '1rem' }}>{event.description}</p>}
+            {event.date && <p className="text-black"><strong>Date:</strong> {event.date}</p>}
+            {event.time && <p className="text-black"><strong>Time:</strong> {event.time}</p>}
+            {event.location && <p className="text-black"><strong>Location:</strong> {event.location}</p>}
+            {event.description && <p className="pt-2 text-black/90">{event.description}</p>}
 
-            <p style={{ marginTop: '1rem' }}><strong>RSVPs:</strong> {event.rsvp_count}</p>
-            <button className="rsvp-btn" onClick={handleRsvp}>RSVP</button>
+            <p className="pt-2 text-black"><strong>RSVPs:</strong> {event.rsvp_count}</p>
+            <button
+                className="rounded-lg bg-[#C41230] px-5 py-2.5 font-semibold text-white transition hover:bg-[#a30f27] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C41230] focus-visible:ring-offset-2"
+                onClick={handleRsvp}
+            >
+                RSVP
+            </button>
 
             {event.related?.length > 0 && (
                 <>
-                    <h2 style={{ marginTop: '2rem' }}>Related Events</h2>
-                    <div className="events-grid">
+                    <h2 className="pt-4 text-2xl font-semibold text-black [font-family:var(--font-brand-serif)]">Related Events</h2>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {event.related.map((e) => (
                             <EventCard key={e.id} event={e} />
                         ))}
