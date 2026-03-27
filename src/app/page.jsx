@@ -1,9 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import EventCard from '@/components/EventCard';
-
-const ACCENT_RED = '#CF142B';
 
 const TEST_EVENT = {
   id: 'test-event-001',
@@ -26,10 +23,10 @@ const LOCAL_FALLBACK_EVENTS = [
     description: 'A hands-on product design workshop where teams prototype and pitch in one evening.',
     date: '2026-11-03',
     time: '5:30 PM',
-    location: 'Library Innovation Lab',
+    location: 'MacOdrum Library Innovation Lab',
     image_url: '',
-    tags: ['Tech', 'Academic'],
-    category: 'Academic',
+    tags: ['Workshop', 'Academic'],
+    category: 'Workshop',
     isMock: true,
   },
   {
@@ -38,7 +35,7 @@ const LOCAL_FALLBACK_EVENTS = [
     description: 'Try campus sports clubs, meet team captains, and sign up for intramural leagues.',
     date: '2026-09-18',
     time: '4:00 PM',
-    location: 'Fieldhouse',
+    location: 'Ravens Nest',
     image_url: '',
     tags: ['Sports', 'Social'],
     category: 'Sports',
@@ -52,7 +49,7 @@ const LOCAL_FALLBACK_EVENTS = [
     time: '7:00 PM',
     location: 'Nicol Building Lobby',
     image_url: '',
-    tags: ['Tech', 'Career'],
+    tags: ['Academic', 'Career', 'Tech'],
     category: 'Tech',
     isMock: true,
   },
@@ -64,54 +61,80 @@ const LOCAL_FALLBACK_EVENTS = [
     time: '8:00 PM',
     location: 'Residence Commons',
     image_url: '',
-    tags: ['Social', 'Cultural'],
+    tags: ['Social'],
     category: 'Social',
     isMock: true,
   },
 ];
 
-const BASE_CATEGORIES = ['Academic', 'Social', 'Sports', 'Career', 'Cultural', 'Wellness', 'Tech'];
+const DEFAULT_TAG_PILLS = ['All', 'Academic', 'Social', 'Sports', 'Career', 'Cultural', 'Wellness', 'Tech'];
 
-const FilterIcon = () => (
-  <svg className="h-3.5 w-3.5 text-white/70" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-);
+function parseEventDate(dateString) {
+  if (!dateString) return null;
+  const date = new Date(`${dateString}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-const SearchIcon = ({ className = 'h-5 w-5 text-white/40' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
-    <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-);
+function startOfDay(date) {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
 
-function isPastEvent(dateString) {
-  if (!dateString) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const eventDate = new Date(`${dateString}T00:00:00`);
-  return !Number.isNaN(eventDate.getTime()) && eventDate < today;
+function addDays(date, amount) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + amount);
+  return copy;
+}
+
+function isSameDay(a, b) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatEventDateTime(eventDate, eventTime) {
+  if (!eventDate && !eventTime) return 'Date and time TBA';
+  const parsed = parseEventDate(eventDate);
+  const dateLabel = parsed
+    ? parsed.toLocaleDateString('en-CA', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })
+    : 'Date TBA';
+  return `${dateLabel} • ${eventTime || 'Time TBA'}`;
+}
+
+function slugifySection(title) {
+  return `section-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 }
 
 function Header({ scrolled }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'border-b border-white/10 bg-black/90 backdrop-blur-xl' : 'bg-transparent'
+        scrolled ? 'border-b border-[#E5E7EB] bg-white/95 backdrop-blur' : 'bg-transparent'
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white">
-          CU THERE
-        </div>
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-12">
+        <span className="text-xs font-bold tracking-[0.2em] text-[#111827]">CU-THERE</span>
 
         <div className="ml-auto flex items-center gap-2">
-          <button className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50">
+          <a
+            href="/about"
+            className="rounded-full border border-[#D1D5DB] bg-white/70 px-4 py-2 text-sm font-medium text-[#111827] transition hover:border-[#6B7280]"
+          >
             About
-          </button>
-          <button className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50">
+          </a>
+          <a
+            href="/feedback"
+            className="rounded-full border border-[#D1D5DB] bg-white/70 px-4 py-2 text-sm font-medium text-[#111827] transition hover:border-[#6B7280]"
+          >
             Feedback
-          </button>
+          </a>
         </div>
       </div>
     </header>
@@ -120,114 +143,127 @@ function Header({ scrolled }) {
 
 function Hero() {
   return (
-    <section className="mx-auto max-w-[1500px] px-4 pb-8 pt-20 md:px-8 md:pb-10">
-      <div className="relative min-h-[560px] w-full overflow-hidden rounded-3xl border border-white/10">
-        <img src="/campus.jpg" alt="Carleton University campus" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/35 to-black/90" />
+    <section className="relative h-[90vh] min-h-[680px] w-full overflow-hidden">
+      <img src="/image.png" alt="Carleton University campus" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-white" />
 
-        <div className="absolute left-6 top-6 z-10 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold tracking-[0.3em] text-white backdrop-blur-sm">
+      <div className="relative z-10 flex h-full flex-col justify-between px-4 pb-20 pt-24 sm:px-6 lg:px-12">
+        <span className="inline-flex w-fit items-center rounded-full border border-[#E5E7EB] bg-white/70 px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-[#111827] backdrop-blur">
           CU-THERE
-        </div>
+        </span>
 
-        <div className="relative z-10 flex h-full max-w-4xl flex-col justify-end px-6 pb-10 pt-20 md:px-10 md:pb-12">
-          <h1 className="max-w-3xl text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl xl:text-7xl">
+        <div className="max-w-4xl">
+          <h1 className="text-4xl font-extrabold leading-[1.05] text-[#111827] sm:text-5xl md:text-6xl lg:text-7xl">
             Discover What&apos;s Happening on Campus
           </h1>
-          <p className="mt-5 max-w-2xl text-base text-[#E5E7EB] md:text-lg">
-            Your one-stop hub for Carleton events. Find clubs, workshops, parties, career fairs, and everything in
-            between.
+          <p className="mt-4 max-w-2xl text-base text-[#6B7280] md:text-lg">
+            Your one-stop hub for Carleton University events. Find clubs, workshops, parties, career fairs, and
+            everything in between.
           </p>
-          <div className="mt-8">
-            <button
-              type="button"
-              onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
-              className="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-              style={{ backgroundColor: ACCENT_RED }}
-            >
-              <SearchIcon className="h-4 w-4 text-white" />
-              Explore Events
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FilterBar({ categories, activeTag, onTagSelect, searchTerm, onSearchChange }) {
-  return (
-    <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-      <div className="space-y-4 rounded-3xl border border-white/10 bg-[#0B0B0B] p-4 sm:p-5">
-        <label className="relative block">
-          <span className="sr-only">Search events</span>
-          <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search events, clubs, or topics..."
-            className="w-full rounded-full border border-white/10 bg-[#111111] py-3 pl-11 pr-4 text-sm text-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#CF142B]"
-          />
-        </label>
-
-        <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
-            onClick={() => onTagSelect('All')}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-              activeTag === 'All'
-                ? 'border-[#CF142B] bg-white/5 text-white'
-                : 'border-white/15 bg-[#161616] text-[#D1D5DB] hover:text-white'
-            }`}
-            aria-pressed={activeTag === 'All'}
+            type="button"
+            onClick={() => document.getElementById('events-anchor')?.scrollIntoView({ behavior: 'smooth' })}
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#CF142B] px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#B50F25] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B]"
           >
-            <FilterIcon />
-            All
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="5" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M14.5 14.5L20 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M10 7.7v4.6M7.7 10h4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            Explore Events
           </button>
-          {categories.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => onTagSelect(tag)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                activeTag === tag
-                  ? 'border-white bg-white/10 text-white'
-                  : 'border-white/15 bg-[#161616] text-[#D1D5DB] hover:text-white'
-              }`}
-              aria-pressed={activeTag === tag}
-            >
-              <FilterIcon />
-              {tag}
-            </button>
-          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function EventSection({ title, events, showTrendingRank = false }) {
+function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-black sm:text-3xl">
+    <section id="events-anchor" className="px-4 py-6 sm:px-6 lg:px-12">
+      <div className="relative">
+        <svg
+          className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9CA3AF]"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(event) => onSearchQuery(event.target.value)}
+          placeholder="Search events, clubs, topics, or locations..."
+          className="w-full rounded-full border border-[#E5E7EB] bg-[#F9FAFB] py-3 pl-14 pr-5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B]"
+        />
+      </div>
+
+      <div className="thin-scrollbar mt-4 flex gap-3 overflow-x-auto pb-1">
+        {pills.map((pill) => (
+          <button
+            key={pill}
+            onClick={() => onPillClick(pill)}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B] ${
+              activePill === pill
+                ? 'border-[#CF142B] bg-[#CF142B]/5 text-[#CF142B]'
+                : 'border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]'
+            }`}
+            aria-pressed={activePill === pill}
+          >
+            {pill}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EventCarouselCard({ event }) {
+  const href = event?.id && !event?.isMock ? `/events/${event.id}` : '#';
+  const imageSource = event?.image_url || '/image.png';
+  const eventDate = parseEventDate(event?.date);
+  const today = startOfDay(new Date());
+  const isTodayEvent = eventDate ? isSameDay(eventDate, today) : false;
+
+  return (
+    <a
+      href={href}
+      className="group block w-72 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm transition hover:-translate-y-0.5"
+      aria-label={`Open event: ${event?.title || 'Untitled event'}`}
+    >
+      <img src={imageSource} alt={event?.title || 'Event image'} className="h-40 w-full object-cover" />
+      <div className="space-y-2 p-4">
+        <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
+        <p className="text-sm font-semibold text-[#CF142B]">
+          {isTodayEvent ? 'LIVE TODAY' : formatEventDateTime(event?.date, event?.time)}
+        </p>
+        <p className="line-clamp-1 text-sm text-[#6B7280]">{event?.location || 'Carleton University Campus'}</p>
+      </div>
+    </a>
+  );
+}
+
+function EventSection({ title, sectionId, events }) {
+  return (
+    <section id={sectionId} className="scroll-mt-24 px-4 py-5 sm:px-6 lg:px-12">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <h2 className="text-2xl font-extrabold text-[#111827]">
           {title}
-          <span className="ml-2 text-sm font-normal text-[#9CA3AF]">• {events.length} events</span>
+          <span className="ml-2 text-sm font-medium text-[#6B7280]">• {events.length} events</span>
         </h2>
-        <a href="#" className="text-sm font-semibold text-[#CF142B] transition hover:text-[#ff5a6d]">
+        <a href={sectionId ? `#${sectionId}` : '#'} className="text-sm font-semibold text-[#CF142B] hover:text-[#B50F25]">
           See All
         </a>
       </div>
 
       {events.length === 0 ? (
-        <p className="rounded-2xl border border-white/10 bg-[#0F0F0F] p-5 text-[#9CA3AF]">No events in this section yet.</p>
+        <p className="text-sm text-[#6B7280]">No events in this section right now.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="thin-scrollbar flex gap-4 overflow-x-auto pb-2">
           {events.map((event, index) => (
-            <EventCard
-              key={`${title}-${event.id}-${index}`}
-              event={event}
-              isPast={isPastEvent(event?.date)}
-              trendingRank={showTrendingRank ? index + 1 : null}
-            />
+            <EventCarouselCard key={`${title}-${event.id || index}`} event={event} />
           ))}
         </div>
       )}
@@ -238,9 +274,9 @@ function EventSection({ title, events, showTrendingRank = false }) {
 export default function HomePage() {
   const [events, setEvents] = useState(LOCAL_FALLBACK_EVENTS);
   const [scrolled, setScrolled] = useState(false);
-  const [activeTag, setActiveTag] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activePill, setActivePill] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function fetchEvents() {
@@ -263,69 +299,143 @@ export default function HomePage() {
         setLoading(false);
       }
     }
+
     fetchEvents();
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 16);
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const categories = useMemo(() => {
-    const set = new Set(BASE_CATEGORIES);
-    events.forEach((event) => {
-      (event.tags || []).forEach((tag) => set.add(tag));
-      if (event.category) set.add(event.category);
-    });
-    return Array.from(set);
-  }, [events]);
+  const searchableEvents = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return events;
 
-  const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      const matchesTag = activeTag === 'All' || event.category === activeTag || event.tags?.includes(activeTag);
-      const haystack = `${event.title || ''} ${event.description || ''} ${event.category || ''} ${(event.tags || []).join(' ')}`.toLowerCase();
-      const matchesSearch = searchTerm.trim().length === 0 || haystack.includes(searchTerm.trim().toLowerCase());
-      return matchesTag && matchesSearch;
+      const searchable = [
+        event.title,
+        event.description,
+        event.location,
+        event.category,
+        ...(event.tags || []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return searchable.includes(query);
     });
-  }, [events, activeTag, searchTerm]);
+  }, [events, searchQuery]);
 
-  const happeningNowEvents = useMemo(() => filteredEvents.slice(0, 4), [filteredEvents]);
-  const trendingEvents = useMemo(() => filteredEvents.slice(0, 4), [filteredEvents]);
-  const careerEvents = useMemo(
-    () =>
-      filteredEvents
-        .filter((event) => event.category === 'Career' || event.tags?.includes('Career'))
-        .slice(0, 4),
-    [filteredEvents]
-  );
+  const activeTags = useMemo(() => {
+    const tags = new Set();
+    searchableEvents.forEach((event) => {
+      (event.tags || []).forEach((tag) => tags.add(tag));
+      if (event.category) tags.add(event.category);
+    });
+
+    return Array.from(tags).sort((a, b) => a.localeCompare(b));
+  }, [searchableEvents]);
+
+  const pillLabels = useMemo(() => {
+    const ordered = [];
+    const seen = new Set();
+
+    [...DEFAULT_TAG_PILLS, ...activeTags].forEach((tag) => {
+      if (!seen.has(tag)) {
+        ordered.push(tag);
+        seen.add(tag);
+      }
+    });
+
+    return ordered;
+  }, [activeTags]);
+
+  const sections = useMemo(() => {
+    const today = startOfDay(new Date());
+    const weekEnd = addDays(today, 7);
+
+    const sorted = [...searchableEvents].sort((a, b) => {
+      const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      return aDate - bDate;
+    });
+
+    const todayEvents = sorted.filter((event) => {
+      const eventDate = parseEventDate(event?.date);
+      return eventDate ? isSameDay(eventDate, today) : false;
+    });
+
+    const weekEvents = sorted.filter((event) => {
+      const eventDate = parseEventDate(event?.date);
+      if (!eventDate) return false;
+      return eventDate > today && eventDate <= weekEnd;
+    });
+
+    const tagSections = activeTags.map((tag) => ({
+      title: tag,
+      sectionId: slugifySection(tag),
+      events: sorted.filter((event) => event.category === tag || (event.tags || []).includes(tag)),
+    }));
+
+    return [
+      { title: 'Today', sectionId: slugifySection('Today'), events: todayEvents },
+      { title: 'This Week', sectionId: slugifySection('This Week'), events: weekEvents },
+      ...tagSections,
+    ];
+  }, [searchableEvents, activeTags]);
+
+  function handlePillClick(pill) {
+    setActivePill(pill);
+    const targetId = pill === 'All' ? 'events-anchor' : slugifySection(pill);
+    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   return (
-    <main className="min-h-screen bg-white text-white">
+    <main className="min-h-screen bg-white pb-12 text-[#111827]">
       <Header scrolled={scrolled} />
       <Hero />
-      <FilterBar
-        categories={categories}
-        activeTag={activeTag}
-        onTagSelect={setActiveTag}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+      <SearchAndPills
+        pills={pillLabels}
+        activePill={activePill}
+        onPillClick={handlePillClick}
+        searchQuery={searchQuery}
+        onSearchQuery={setSearchQuery}
       />
 
-      <section id="events" aria-live="polite" className="pb-14">
-        {loading ? (
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <p className="rounded-2xl border border-white/10 bg-[#0F0F0F] p-6 text-[#9CA3AF]">Loading events...</p>
-          </div>
-        ) : (
-          <>
-            <EventSection title="Happening Now" events={happeningNowEvents} />
-            <EventSection title="Trending Events" events={trendingEvents} showTrendingRank />
-            <EventSection title="Career" events={careerEvents} />
-          </>
-        )}
-      </section>
+      {loading ? (
+        <section className="px-4 py-10 text-[#6B7280] sm:px-6 lg:px-12">Loading events...</section>
+      ) : (
+        <section id="events" className="pb-10">
+          {sections.map((section) => (
+            <EventSection
+              key={section.sectionId}
+              title={section.title}
+              sectionId={section.sectionId}
+              events={section.events}
+            />
+          ))}
+        </section>
+      )}
+
+      <style jsx>{`
+        :global(.thin-scrollbar) {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db transparent;
+        }
+        :global(.thin-scrollbar::-webkit-scrollbar) {
+          height: 7px;
+        }
+        :global(.thin-scrollbar::-webkit-scrollbar-track) {
+          background: transparent;
+        }
+        :global(.thin-scrollbar::-webkit-scrollbar-thumb) {
+          background: #d1d5db;
+          border-radius: 9999px;
+        }
+      `}</style>
     </main>
   );
 }

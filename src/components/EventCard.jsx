@@ -1,47 +1,60 @@
-function formatDate(date, time) {
+function formatBadge(date, time) {
   if (!date && !time) return 'TBA';
   const parsed = date ? new Date(`${date}T00:00:00`) : null;
   const monthDay = parsed
     ? `${parsed.toLocaleString('en-US', { month: 'short' }).toUpperCase()} ${parsed.getDate()}`
     : 'TBA';
-  return `${monthDay} • ${time || 'TBA'}`;
+  return `${monthDay} | ${time || 'TBA'}`;
 }
 
-export default function EventCard({ event, trendingRank = null, isPast = false }) {
+export default function EventCard({ event }) {
   const href = event?.id && !event?.isMock ? `/events/${event.id}` : '#';
+  const cardTags = event?.tags?.length ? event.tags : [event?.category || 'General'];
 
   return (
     <a
       href={href}
-      className="group block overflow-hidden rounded-2xl border border-white/10 bg-[#111111] transition hover:-translate-y-0.5 hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B]"
+      className="group block rounded-xl border border-black/10 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C41230] focus-visible:ring-offset-2"
       aria-label={`Open event: ${event?.title || 'Untitled event'}`}
     >
-      <div className="relative aspect-video w-full overflow-hidden bg-[#1a1a1a]">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-[#C41230]">
         {event?.image_url ? (
           <>
             <img
               src={event.image_url}
               alt={event.title || 'Event image'}
-              className="h-full w-full object-cover brightness-90 transition duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover grayscale contrast-125 brightness-75 transition duration-300 group-hover:scale-105"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/90" />
+            <div className="pointer-events-none absolute inset-0 bg-[#C41230]/30 mix-blend-multiply" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1f1f1f] via-[#181818] to-[#101010]" />
+          <div className="absolute inset-0 bg-[#C41230]" />
         )}
 
-        <div className="absolute right-3 top-3 flex items-center gap-2">
-          {isPast && <span className="rounded-full bg-[#374151] px-3 py-1 text-[10px] font-semibold tracking-wide text-white">PAST EVENT</span>}
-          {trendingRank ? (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#CF142B] text-xs font-bold text-white">
-              #{trendingRank}
-            </span>
-          ) : null}
+        <div className="absolute right-0 top-0 bg-black px-2.5 py-1.5 text-[11px] font-semibold tracking-wide text-white">
+          {formatBadge(event?.date, event?.time)}
+        </div>
+      </div>
+
+      <div className="space-y-2 p-2.5">
+        <div>
+          <p className="text-xs font-normal text-gray-500 [font-family:var(--font-brand-sans)]">{event?.time || 'Time TBA'}</p>
+          <h3 className="mt-0.5 text-lg font-bold leading-snug text-black [font-family:var(--font-brand-sans)]">{event?.title || 'Untitled Event'}</h3>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-          <h3 className="text-lg font-bold leading-snug text-white sm:text-xl">{event?.title || 'Untitled Event'}</h3>
-          <p className="mt-1 text-sm text-[#9CA3AF]">{formatDate(event?.date, event?.time)}</p>
+        <p className="line-clamp-2 text-sm text-black/75 [font-family:var(--font-brand-sans)]">
+          {event?.description || 'Come join this university event and connect with the community.'}
+        </p>
+
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {cardTags.slice(0, 2).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-sm bg-black px-2 py-0.5 text-[11px] font-medium text-white [font-family:var(--font-brand-sans)]"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
       </div>
     </a>

@@ -1,14 +1,15 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
 :root {
-  --font-brand-sans: Inter, "Segoe UI", Arial, sans-serif;
-  --font-brand-serif: "PT Serif";
+  --font-brand-sans: "Inter", Arial, sans-serif;
+  --font-brand-serif: "Inter", Arial, sans-serif;
 }
 
 html,
 body {
-  background: #000000;
-  color: #ffffff;
+  background: #FFFFFF;
+  color: #111827;
   font-family: var(--font-brand-sans);
   scroll-behavior: smooth;
 }
