@@ -225,34 +225,37 @@ function Hero() {
 function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
   return (
     <section id="events-anchor" className="px-4 pb-8 pt-16 sm:px-6 sm:pt-20 lg:px-12">
+      {/* Search bar */}
       <div className="relative">
         <svg
-          className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9CA3AF]"
+          className="pointer-events-none absolute left-5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400"
           viewBox="0 0 24 24"
           fill="none"
           aria-hidden="true"
+          strokeWidth="1.6"
         >
-          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M16.5 16.5L21 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeLinecap="round" />
+          <path d="M16.5 16.5L21 21" stroke="currentColor" strokeLinecap="round" />
         </svg>
         <input
           type="search"
           value={searchQuery}
-          onChange={(event) => onSearchQuery(event.target.value)}
-          placeholder="Search events, clubs, topics, or locations..."
-          className="w-full rounded-full border border-[#E5E7EB] bg-[#F9FAFB] py-3 pl-14 pr-5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B]"
+          onChange={(e) => onSearchQuery(e.target.value)}
+          placeholder="Search Carleton events, clubs, or topics..."
+          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-5 font-sans text-sm text-slate-800 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D71920]"
         />
       </div>
 
-      <div className="thin-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1">
+      {/* Filter pills */}
+      <div className="thin-scrollbar mt-4 flex gap-3 overflow-x-auto pb-1">
         {pills.map((pill) => (
           <button
             key={pill}
             onClick={() => onPillClick(pill)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CF142B] ${
+            className={`inline-flex shrink-0 items-center rounded-full border px-6 py-1.5 font-sans text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D71920] ${
               activePill === pill
-                ? 'border-[#D1D5DB] bg-white text-[#111827]'
-                : 'border-[#E5E7EB] bg-transparent text-[#1F2937] hover:border-[#9CA3AF]'
+                ? 'border-[#D71920] bg-[#D71920] text-white'
+                : 'border-gray-100 bg-white text-slate-700 hover:border-gray-300'
             }`}
             aria-pressed={activePill === pill}
           >
@@ -277,9 +280,9 @@ function EventSection({ title, sectionId, events }) {
   return (
     <section id={sectionId} className="scroll-mt-24 px-4 py-5 sm:px-6 lg:px-12">
       <div className="mb-4 flex items-end justify-between gap-4">
-        <div className="inline-flex items-center gap-2">
-          <h2 className="text-2xl font-black text-[#111827]">{title}</h2>
-          <span className="text-sm font-medium text-[#9CA3AF]">• {events.length} events</span>
+        <div className="inline-flex items-baseline gap-2">
+          <h2 className="font-sans text-3xl font-medium text-[#111827]">{title}</h2>
+          <span className="font-sans text-sm font-medium text-slate-500">• {events.length} events</span>
         </div>
         <div className="flex items-center gap-2">
           <button

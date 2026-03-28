@@ -46,10 +46,10 @@ export default function EventCard({ event }) {
         )}
       </div>
 
-      <div className="space-y-2.5 p-5">
-        <h3 className="line-clamp-2 text-base font-extrabold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
-        <p className="text-sm font-bold text-[#D71920]">{formatEventDateTime(event?.date, event?.time)}</p>
-        <p className="inline-flex line-clamp-1 items-center gap-1.5 text-sm text-[#6B7280]">
+      <div className="space-y-2 p-5">
+        <h3 className="line-clamp-2 font-sans text-lg font-bold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
+        <p className="font-sans text-sm font-bold text-[#D71920]">{formatEventDateTime(event?.date, event?.time)}</p>
+        <p className="inline-flex line-clamp-1 items-center gap-1.5 font-sans text-xs font-medium text-[#6B7280]">
           <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#9CA3AF]" fill="none" aria-hidden="true">
             <path
               d="M12 21s6-5.8 6-11a6 6 0 10-12 0c0 5.2 6 11 6 11z"
