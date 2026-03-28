@@ -176,7 +176,7 @@ function Hero() {
   const ACCENT_RED = '#CF142B';
 
   return (
-    <section className="relative min-h-[85dvh] w-full overflow-hidden sm:min-h-[90dvh]">
+    <section className="relative min-h-[70dvh] w-full overflow-hidden sm:min-h-[90dvh]">
       {/* 1. Base Image */}
       <img
         src="/image.png"
@@ -189,14 +189,14 @@ function Hero() {
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
 
       {/* 3. Bottom Fade-to-White */}
-      <div className="absolute inset-x-0 bottom-0 z-[5] h-48 bg-gradient-to-t from-white via-white/80 to-transparent sm:h-64" />
+      <div className="absolute inset-x-0 bottom-0 z-[5] h-48 bg-gradient-to-t from-[#FCFAF7] via-[#FCFAF7]/80 to-transparent sm:h-64" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
         <h1
-          className="max-w-3xl text-4xl font-black leading-[1.08] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
+          className="max-w-3xl text-4xl font-bold leading-[1.08] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
           style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
         >
-          Discover the Best of Carleton.
+          Discover the Best <br/> of Carleton.
         </h1>
 
         <p
@@ -223,40 +223,39 @@ function Hero() {
 
 function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
   return (
-    <section id="events-anchor" className="mx-auto max-w-7xl px-4 pb-8 pt-12 sm:px-6 sm:pt-16 lg:px-12 lg:pt-20">
+    <section id="events-anchor" className="relative z-20 mx-auto max-w-7xl -mt-14 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 lg:px-12">
       {/* Search bar */}
-      <div className="relative">
+      <div className="relative group">
         <svg
-          className="pointer-events-none absolute left-5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400"
+          className="absolute left-5 top-1/2 h-[20px] w-[20px] -translate-y-1/2 text-gray-400 group-focus-within:text-[#D71920] transition-colors"
           viewBox="0 0 24 24"
           fill="none"
-          aria-hidden="true"
-          strokeWidth="1.6"
+          stroke="currentColor"
+          strokeWidth="2"
         >
-          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeLinecap="round" />
-          <path d="M16.5 16.5L21 21" stroke="currentColor" strokeLinecap="round" />
+          <circle cx="11" cy="11" r="7" />
+          <path d="M16.5 16.5L21 21" />
         </svg>
         <input
           type="search"
           value={searchQuery}
           onChange={(e) => onSearchQuery(e.target.value)}
           placeholder="Search Carleton events, clubs, or topics..."
-          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-5 font-sans text-base text-slate-800 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D71920]"
+          className="w-full rounded-full border border-gray-200 bg-white py-4 pl-12 pr-6 font-sans text-base font-medium text-slate-800 shadow-sm placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-4 focus:ring-[#D71920]/5 transition-all"
         />
       </div>
 
       {/* Filter pills */}
-      <div className="scrollbar-hide touch-pan-x mt-4 flex gap-3 overflow-x-auto pb-1">
+      <div className="scrollbar-hide touch-pan-x mt-6 flex gap-3 overflow-x-auto pb-2">
         {pills.map((pill) => (
           <button
             key={pill}
             onClick={() => onPillClick(pill)}
-            className={`inline-flex shrink-0 items-center rounded-full border px-6 py-1.5 font-sans text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D71920] ${
+            className={`inline-flex shrink-0 items-center rounded-full border px-6 py-2 font-sans text-sm font-bold transition-all ${
               activePill === pill
-                ? 'border-[#D71920] bg-[#D71920] text-white'
-                : 'border-gray-100 bg-white text-slate-700 hover:border-gray-300'
+                ? 'border-[#D71920] bg-[#D71920] text-white shadow-md'
+                : 'border-gray-200 bg-white text-slate-600 hover:border-gray-400'
             }`}
-            aria-pressed={activePill === pill}
           >
             {pill}
           </button>
@@ -279,7 +278,7 @@ function EventSection({ title, sectionId, events }) {
     <section id={sectionId} className="scroll-mt-24 px-4 py-5 sm:px-6 lg:px-12">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="inline-flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <h2 className="font-sans text-2xl font-black text-[#111827] sm:text-3xl">{title}</h2>
+          <h2 className="font-sans text-2xl font-bold text-[#111827] sm:text-3xl">{title}</h2>
           <span className="font-sans text-sm font-medium text-slate-500">• {events.length} events</span>
         </div>
         <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
