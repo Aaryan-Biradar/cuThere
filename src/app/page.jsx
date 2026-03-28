@@ -132,39 +132,25 @@ function slugifySection(title) {
 function Header({ scrolled }) {
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-all duration-300 ${
-        scrolled ? 'border-b border-black/5 bg-white/70 backdrop-blur' : 'bg-transparent'
+      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
+        scrolled ? 'bg-black border-b border-white/10 shadow-sm' : 'bg-transparent'
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <span
-          className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium tracking-[0.18em] ${
-            scrolled
-              ? 'border-[#D1D5DB] bg-white/85 text-[#111827]'
-              : 'border-white/35 bg-white/10 text-white'
-          }`}
-        >
+        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium tracking-[0.18em] text-white">
           LOGO / NAME
         </span>
 
         <div className="ml-auto flex items-center gap-2">
           <a
             href="/about"
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              scrolled
-                ? 'border-[#D1D5DB] bg-white/85 text-[#111827] hover:border-[#9CA3AF]'
-                : 'border-white/35 bg-white/10 text-white hover:border-white/60'
-            }`}
+            className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/45 hover:bg-white/15"
           >
             About
           </a>
           <a
             href="/feedback"
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              scrolled
-                ? 'border-[#D1D5DB] bg-white/85 text-[#111827] hover:border-[#9CA3AF]'
-                : 'border-white/35 bg-white/10 text-white hover:border-white/60'
-            }`}
+            className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/45 hover:bg-white/15"
           >
             Feedback
           </a>
