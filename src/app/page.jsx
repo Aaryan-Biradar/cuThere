@@ -132,11 +132,11 @@ function slugifySection(title) {
 function Header({ scrolled }) {
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-all duration-300 ${
         scrolled ? 'border-b border-black/5 bg-white/70 backdrop-blur' : 'bg-transparent'
       }`}
     >
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-12">
+      <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
         <span
           className={`inline-flex items-center rounded-full border px-4 py-1.5 text-xs font-bold tracking-[0.2em] ${
             scrolled ? 'border-[#E5E7EB] bg-white text-[#111827]' : 'border-[#E5E7EB] bg-white text-[#111827]'
@@ -176,7 +176,7 @@ function Hero() {
   const ACCENT_RED = '#CF142B';
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ minHeight: '90vh' }}>
+    <section className="relative min-h-[85dvh] w-full overflow-hidden sm:min-h-[90dvh]">
       {/* 1. Base Image */}
       <img
         src="/image.png"
@@ -186,32 +186,31 @@ function Hero() {
 
       {/* 2. Horizontal Scrim (The Fix for Legibility) */}
       {/* This creates a dark fade from the left to make white text pop */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent z-0" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
 
       {/* 3. Bottom Fade-to-White */}
-      <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-white via-white/80 to-transparent z-[5]" />
+      <div className="absolute inset-x-0 bottom-0 z-[5] h-48 bg-gradient-to-t from-white via-white/80 to-transparent sm:h-64" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-40 pt-36 md:px-10 md:pb-48 md:pt-44">
-
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
         <h1
-          className="max-w-3xl text-5xl font-black leading-[1.1] text-white sm:text-6xl md:text-7xl"
+          className="max-w-3xl text-4xl font-black leading-[1.08] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
           style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
         >
           Discover the Best of Carleton.
         </h1>
-        
+
         <p
-          className="mt-6 max-w-xl text-lg font-medium text-white/95 md:text-xl"
+          className="mt-5 max-w-xl text-base font-medium leading-relaxed text-white/95 sm:mt-6 sm:text-lg md:text-xl"
           style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
         >
           From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
         </p>
 
-        <div className="mt-10">
+        <div className="mt-8 sm:mt-10">
           <button
             type="button"
             onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
-            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-bold text-white shadow-2xl transition-all hover:scale-105 active:scale-95"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-bold text-white shadow-2xl transition-all active:scale-[0.98] sm:px-8 sm:py-4 sm:text-lg sm:hover:scale-[1.02]"
             style={{ backgroundColor: ACCENT_RED }}
           >
             Explore Events
@@ -224,7 +223,7 @@ function Hero() {
 
 function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
   return (
-    <section id="events-anchor" className="px-4 pb-8 pt-16 sm:px-6 sm:pt-20 lg:px-12">
+    <section id="events-anchor" className="mx-auto max-w-7xl px-4 pb-8 pt-12 sm:px-6 sm:pt-16 lg:px-12 lg:pt-20">
       {/* Search bar */}
       <div className="relative">
         <svg
@@ -242,12 +241,12 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
           value={searchQuery}
           onChange={(e) => onSearchQuery(e.target.value)}
           placeholder="Search Carleton events, clubs, or topics..."
-          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-5 font-sans text-sm text-slate-800 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D71920]"
+          className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-12 pr-5 font-sans text-base text-slate-800 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D71920]"
         />
       </div>
 
       {/* Filter pills */}
-      <div className="thin-scrollbar mt-4 flex gap-3 overflow-x-auto pb-1">
+      <div className="scrollbar-hide touch-pan-x mt-4 flex gap-3 overflow-x-auto pb-1">
         {pills.map((pill) => (
           <button
             key={pill}
@@ -269,42 +268,43 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
 
 function EventSection({ title, sectionId, events }) {
   const carouselId = `${sectionId}-carousel`;
-  const scrollByAmount = 320;
-
   function scrollCarousel(direction) {
     const element = document.getElementById(carouselId);
     if (!element) return;
-    element.scrollBy({ left: direction * scrollByAmount, behavior: 'smooth' });
+    const amount = Math.min(320, Math.max(200, element.clientWidth * 0.85));
+    element.scrollBy({ left: direction * amount, behavior: 'smooth' });
   }
 
   return (
     <section id={sectionId} className="scroll-mt-24 px-4 py-5 sm:px-6 lg:px-12">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div className="inline-flex items-baseline gap-2">
-          <h2 className="font-sans text-3xl font-medium text-[#111827]">{title}</h2>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div className="inline-flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <h2 className="font-sans text-2xl font-black text-[#111827] sm:text-3xl">{title}</h2>
           <span className="font-sans text-sm font-medium text-slate-500">• {events.length} events</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => scrollCarousel(-1)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
-            aria-label={`Scroll ${title} events left`}
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollCarousel(1)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
-            aria-label={`Scroll ${title} events right`}
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+        <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+          <div className="hidden items-center gap-2 sm:flex">
+            <button
+              type="button"
+              onClick={() => scrollCarousel(-1)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
+              aria-label={`Scroll ${title} events left`}
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollCarousel(1)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
+              aria-label={`Scroll ${title} events right`}
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
           <a href={sectionId ? `#${sectionId}` : '#'} className="ml-1 text-sm font-semibold text-[#D71920] hover:text-[#BE161C]">
             See All
           </a>
@@ -314,7 +314,7 @@ function EventSection({ title, sectionId, events }) {
       {events.length === 0 ? (
         <p className="text-sm text-[#6B7280]">No events in this section right now.</p>
       ) : (
-        <div id={carouselId} className="thin-scrollbar flex gap-3 overflow-x-auto pb-2">
+        <div id={carouselId} className="scrollbar-hide touch-pan-x flex gap-3 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
           {events.map((event, index) => (
             <EventCard key={`${title}-${event.id || index}`} event={event} />
           ))}
@@ -447,7 +447,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FCFAF7] pb-12 text-[#111827]">
+    <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(3rem,env(safe-area-inset-bottom))]">
       <Header scrolled={scrolled} />
       <Hero />
       <SearchAndPills
@@ -459,9 +459,9 @@ export default function HomePage() {
       />
 
       {loading ? (
-        <section className="px-4 py-10 text-[#6B7280] sm:px-6 lg:px-12">Loading events...</section>
+        <section className="mx-auto max-w-7xl px-4 py-10 text-[#6B7280] sm:px-6 lg:px-12">Loading events...</section>
       ) : (
-        <section id="events" className="pb-10">
+        <section id="events" className="mx-auto max-w-7xl pb-10">
           {sections.map((section) => (
             <EventSection
               key={section.sectionId}
@@ -473,22 +473,6 @@ export default function HomePage() {
         </section>
       )}
 
-      <style jsx>{`
-        :global(.thin-scrollbar) {
-          scrollbar-width: thin;
-          scrollbar-color: #d1d5db transparent;
-        }
-        :global(.thin-scrollbar::-webkit-scrollbar) {
-          height: 7px;
-        }
-        :global(.thin-scrollbar::-webkit-scrollbar-track) {
-          background: transparent;
-        }
-        :global(.thin-scrollbar::-webkit-scrollbar-thumb) {
-          background: #d1d5db;
-          border-radius: 9999px;
-        }
-      `}</style>
     </main>
   );
 }

@@ -6,10 +6,34 @@
   --font-brand-serif:  Georgia, serif;
 }
 
+html {
+  /* Stops iOS Safari / WKWebView from auto-scaling text (feels like random “zoom”) */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body {
   background: #ffffff;
   color: #111827;
   font-family: var(--font-brand-sans);
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Smooth horizontal scroll in carousels on touch devices */
+@supports (-webkit-overflow-scrolling: touch) {
+  .touch-pan-x {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Hide scrollbars on horizontal pill rows & carousels (scroll still works) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
