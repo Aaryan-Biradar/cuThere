@@ -173,8 +173,6 @@ function Header({ scrolled }) {
 }
 
 function Hero() {
-  const ACCENT_RED = '#CF142B';
-
   return (
     <section className="relative h-[33dvh] min-h-[200px] w-full overflow-hidden sm:min-h-[90dvh] sm:h-auto">
       {/* 1. Base Image — cover fills frame (no letterboxing); tweak object position if focal point shifts */}
@@ -187,7 +185,7 @@ function Hero() {
       {/* 2. Horizontal Scrim — desktop only; mobile uses bottom gradient for text */}
       <div className="absolute inset-0 z-[1] hidden bg-gradient-to-r from-black/50 via-black/20 to-transparent sm:block" />
 
-      {/* 3. Bottom Fade — stronger on mobile so title/button read; cream fade on desktop */}
+      {/* 3. Bottom Fade — stronger on mobile so title reads; cream fade on desktop */}
       <div className="absolute inset-x-0 bottom-0 z-[5] h-28 bg-gradient-to-t from-black/70 via-black/35 to-transparent sm:h-64 sm:from-[#FCFAF7] sm:via-[#FCFAF7]/80 sm:to-transparent" />
 
       {/* Mobile: vertically center copy in the hero band below the fixed header; desktop: unchanged layout */}
@@ -207,17 +205,6 @@ function Hero() {
           >
             From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
           </p>
-
-          <div className="mt-4 sm:mt-10">
-            <button
-              type="button"
-              onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-2xl transition-all active:scale-[0.98] sm:px-8 sm:py-4 sm:text-lg sm:hover:scale-[1.02]"
-              style={{ backgroundColor: ACCENT_RED }}
-            >
-              Explore Events
-            </button>
-          </div>
         </div>
       </div>
     </section>
