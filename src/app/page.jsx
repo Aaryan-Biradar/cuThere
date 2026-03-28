@@ -138,11 +138,13 @@ function Header({ scrolled }) {
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
         <span
-          className={`inline-flex items-center rounded-full border px-4 py-1.5 text-xs font-bold tracking-[0.2em] ${
-            scrolled ? 'border-[#E5E7EB] bg-white text-[#111827]' : 'border-[#E5E7EB] bg-white text-[#111827]'
+          className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium tracking-[0.18em] ${
+            scrolled
+              ? 'border-[#D1D5DB] bg-white/85 text-[#111827]'
+              : 'border-white/35 bg-white/10 text-white'
           }`}
         >
-          CU THERE
+          LOGO / NAME
         </span>
 
         <div className="ml-auto flex items-center gap-2">
