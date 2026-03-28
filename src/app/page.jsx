@@ -176,45 +176,48 @@ function Hero() {
   const ACCENT_RED = '#CF142B';
 
   return (
-    <section className="relative min-h-[70dvh] w-full overflow-hidden sm:min-h-[90dvh]">
-      {/* 1. Base Image */}
+    <section className="relative h-[33dvh] min-h-[200px] w-full overflow-hidden sm:min-h-[90dvh] sm:h-auto">
+      {/* 1. Base Image — cover fills frame (no letterboxing); tweak object position if focal point shifts */}
       <img
         src="/image.png"
         alt="Carleton University campus"
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 z-0 h-full w-full object-cover object-[center_35%] sm:object-center"
       />
 
-      {/* 2. Horizontal Scrim (The Fix for Legibility) */}
-      {/* This creates a dark fade from the left to make white text pop */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
+      {/* 2. Horizontal Scrim — desktop only; mobile uses bottom gradient for text */}
+      <div className="absolute inset-0 z-[1] hidden bg-gradient-to-r from-black/50 via-black/20 to-transparent sm:block" />
 
-      {/* 3. Bottom Fade-to-White */}
-      <div className="absolute inset-x-0 bottom-0 z-[5] h-48 bg-gradient-to-t from-[#FCFAF7] via-[#FCFAF7]/80 to-transparent sm:h-64" />
+      {/* 3. Bottom Fade — stronger on mobile so title/button read; cream fade on desktop */}
+      <div className="absolute inset-x-0 bottom-0 z-[5] h-28 bg-gradient-to-t from-black/70 via-black/35 to-transparent sm:h-64 sm:from-[#FCFAF7] sm:via-[#FCFAF7]/80 sm:to-transparent" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 pt-28 sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
-        <h1
-          className="max-w-3xl text-4xl font-bold leading-[1.08] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
-          style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
-        >
-          Discover the Best <br/> of Carleton.
-        </h1>
-
-        <p
-          className="mt-5 max-w-xl text-base font-medium leading-relaxed text-white/95 sm:mt-6 sm:text-lg md:text-xl"
-          style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
-        >
-          From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
-        </p>
-
-        <div className="mt-8 sm:mt-10">
-          <button
-            type="button"
-            onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-bold text-white shadow-2xl transition-all active:scale-[0.98] sm:px-8 sm:py-4 sm:text-lg sm:hover:scale-[1.02]"
-            style={{ backgroundColor: ACCENT_RED }}
+      {/* Mobile: vertically center copy in the hero band below the fixed header; desktop: unchanged layout */}
+      <div className="relative z-10 mx-auto flex h-full min-h-0 max-w-7xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+4rem)] pb-4 sm:block sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
+        <div className="flex min-h-0 flex-1 flex-col items-start justify-center text-left sm:block">
+          <h1
+            className="max-w-3xl text-2xl font-bold leading-tight text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
+            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
           >
-            Explore Events
-          </button>
+            Discover the Best
+            <br className="hidden sm:block" /> of Carleton.
+          </h1>
+
+          <p
+            className="mt-2 max-w-xl line-clamp-2 text-sm font-medium leading-snug text-white/95 sm:mt-6 sm:line-clamp-none sm:text-lg md:text-xl"
+            style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
+          >
+            From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
+          </p>
+
+          <div className="mt-4 sm:mt-10">
+            <button
+              type="button"
+              onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-2xl transition-all active:scale-[0.98] sm:px-8 sm:py-4 sm:text-lg sm:hover:scale-[1.02]"
+              style={{ backgroundColor: ACCENT_RED }}
+            >
+              Explore Events
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -223,7 +226,7 @@ function Hero() {
 
 function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
   return (
-    <section id="events-anchor" className="relative z-20 mx-auto max-w-7xl -mt-14 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 lg:px-12">
+    <section id="events-anchor" className="relative z-20 mx-auto max-w-7xl -mt-6 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 lg:px-12">
       {/* Search bar */}
       <div className="relative group">
         <svg
