@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { getDemoEventById } from '@/lib/demo-events';
 
 // GET /api/events/:id  —  single event + RSVP count + related events
 export async function GET(request, { params }) {
@@ -8,6 +9,15 @@ export async function GET(request, { params }) {
 
     const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id);
     if (!event) {
+        const demo = getDemoEventById(id);
+        if (demo) {
+            return NextResponse.json({
+                ...demo,
+                rsvp_count: 0,
+                related: [],
+                is_demo: true,
+            });
+        }
         return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 

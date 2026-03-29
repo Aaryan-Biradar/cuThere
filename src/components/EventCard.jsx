@@ -1,3 +1,7 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+
 function parseEventDate(dateString) {
   if (!dateString) return null;
   const date = new Date(`${dateString}T00:00:00`);
@@ -19,17 +23,14 @@ function formatEventDateTime(date, time) {
   if (!date && !time) return 'Date and time TBA';
   const parsed = parseEventDate(date);
   const dateLabel = parsed
-    ? parsed.toLocaleDateString('en-CA', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
+    ? parsed.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
     : 'Date TBA';
   return `${dateLabel} · ${time || 'Time TBA'}`;
 }
 
 export default function EventCard({ event, layout = 'carousel' }) {
-  const href = event?.id && !event?.isMock ? `/events/${event.id}` : '#';
+  const router = useRouter();
+  const hasId = event?.id != null && event?.id !== '';
   const showTodayBadge = isTodayEvent(event?.date);
 
   const widthClass =
@@ -37,10 +38,17 @@ export default function EventCard({ event, layout = 'carousel' }) {
       ? 'w-full max-w-none'
       : 'w-[min(16rem,calc(100vw-2.5rem))] shrink-0 sm:w-64';
 
+  function handleClick(e) {
+    if (!hasId) return;
+    e.preventDefault();
+    router.push(`?event=${event.id}`, { scroll: false });
+  }
+
   return (
     <a
-      href={href}
-      className={`group block overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass}`}
+      href={hasId ? `?event=${event.id}` : '#'}
+      onClick={handleClick}
+      className={`group block cursor-pointer overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass}`}
       aria-label={`Open event: ${event?.title || 'Untitled event'}`}
     >
       <div className="relative h-40 w-full border-b border-[#E5E7EB] bg-[#F3F4F6]">
