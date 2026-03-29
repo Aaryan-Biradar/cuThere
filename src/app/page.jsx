@@ -284,32 +284,27 @@ function EventSection({ title, sectionId, events }) {
           <h2 className="font-sans text-2xl font-bold text-[#111827] sm:text-3xl">{title}</h2>
           <span className="font-sans text-sm font-medium text-slate-500">• {events.length} events</span>
         </div>
-        <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
-          <div className="hidden items-center gap-2 sm:flex">
-            <button
-              type="button"
-              onClick={() => scrollCarousel(-1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
-              aria-label={`Scroll ${title} events left`}
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-                <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollCarousel(1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
-              aria-label={`Scroll ${title} events right`}
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-                <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-          <a href={sectionId ? `#${sectionId}` : '#'} className="ml-1 text-sm font-semibold text-[#D71920] hover:text-[#BE161C]">
-            See All
-          </a>
+        <div className="hidden shrink-0 items-center gap-2 self-start sm:flex sm:self-auto">
+          <button
+            type="button"
+            onClick={() => scrollCarousel(-1)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
+            aria-label={`Scroll ${title} events left`}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollCarousel(1)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
+            aria-label={`Scroll ${title} events right`}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
       </div>
 
