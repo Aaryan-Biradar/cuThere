@@ -22,11 +22,28 @@ body {
   overflow-x: hidden;
 }
 
-/* Smooth horizontal scroll in carousels on touch devices */
-@supports (-webkit-overflow-scrolling: touch) {
-  .touch-pan-x {
-    -webkit-overflow-scrolling: touch;
+/* Hide the vertical page scrollbar on mobile; scrolling still works (touch / wheel) */
+@media (max-width: 767px) {
+  html,
+  body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+/*
+ * Horizontal overflow rows: must allow vertical pan too. `touch-action: pan-x` alone
+ * (Tailwind's touch-pan-x) steals the gesture and blocks page scroll when dragging on cards.
+ */
+.touch-scroll-x {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Hide scrollbars on horizontal pill rows & carousels (scroll still works) */

@@ -225,7 +225,7 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
 
       {/* Filter pills — hidden while searching so results are one clear list */}
       {showPills && (
-        <div className="scrollbar-hide touch-pan-x mt-6 flex gap-3 overflow-x-auto pb-2">
+        <div className="scrollbar-hide touch-scroll-x mt-6 flex gap-3 overflow-x-auto pb-2">
           {pills.map((pill) => (
             <button
               key={pill}
@@ -316,7 +316,7 @@ function EventSection({ title, sectionId, events }) {
       {events.length === 0 ? (
         <p className="text-sm text-[#6B7280]">No events in this section right now.</p>
       ) : (
-        <div id={carouselId} className="scrollbar-hide touch-pan-x flex gap-3 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
+        <div id={carouselId} className="scrollbar-hide touch-scroll-x flex gap-3 overflow-x-auto pb-2">
           {events.map((event, index) => (
             <EventCard key={`${title}-${event.id || index}`} event={event} />
           ))}
