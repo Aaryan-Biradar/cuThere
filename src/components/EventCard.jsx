@@ -28,14 +28,19 @@ function formatEventDateTime(date, time) {
   return `${dateLabel} · ${time || 'Time TBA'}`;
 }
 
-export default function EventCard({ event }) {
+export default function EventCard({ event, layout = 'carousel' }) {
   const href = event?.id && !event?.isMock ? `/events/${event.id}` : '#';
   const showTodayBadge = isTodayEvent(event?.date);
+
+  const widthClass =
+    layout === 'grid'
+      ? 'w-full max-w-none'
+      : 'w-[min(16rem,calc(100vw-2.5rem))] shrink-0 sm:w-64';
 
   return (
     <a
       href={href}
-      className="group block w-[min(16rem,calc(100vw-2.5rem))] shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 sm:w-64"
+      className={`group block overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass}`}
       aria-label={`Open event: ${event?.title || 'Untitled event'}`}
     >
       <div className="relative h-40 w-full border-b border-[#E5E7EB] bg-[#F3F4F6]">

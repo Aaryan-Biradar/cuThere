@@ -199,7 +199,7 @@ function Hero() {
   );
 }
 
-function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery }) {
+function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery, showPills = true }) {
   return (
     <section id="events-anchor" className="relative z-20 mx-auto max-w-7xl -mt-6 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 lg:px-12">
       {/* Search bar */}
@@ -223,22 +223,47 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
         />
       </div>
 
-      {/* Filter pills */}
-      <div className="scrollbar-hide touch-pan-x mt-6 flex gap-3 overflow-x-auto pb-2">
-        {pills.map((pill) => (
-          <button
-            key={pill}
-            onClick={() => onPillClick(pill)}
-            className={`inline-flex shrink-0 items-center rounded-full border px-6 py-2 font-sans text-sm font-bold transition-all ${
-              activePill === pill
-                ? 'border-[#D71920] bg-[#D71920] text-white shadow-md'
-                : 'border-gray-200 bg-white text-slate-600 hover:border-gray-400'
-            }`}
-          >
-            {pill}
-          </button>
-        ))}
+      {/* Filter pills — hidden while searching so results are one clear list */}
+      {showPills && (
+        <div className="scrollbar-hide touch-pan-x mt-6 flex gap-3 overflow-x-auto pb-2">
+          {pills.map((pill) => (
+            <button
+              key={pill}
+              onClick={() => onPillClick(pill)}
+              className={`inline-flex shrink-0 items-center rounded-full border px-6 py-2 font-sans text-sm font-bold transition-all ${
+                activePill === pill
+                  ? 'border-[#D71920] bg-[#D71920] text-white shadow-md'
+                  : 'border-gray-200 bg-white text-slate-600 hover:border-gray-400'
+              }`}
+            >
+              {pill}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SearchResultsSection({ query, events }) {
+  return (
+    <section id="events" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-12">
+      <div className="mb-6">
+        <p className="font-sans text-sm font-medium text-slate-500">Showing results for</p>
+        <h2 className="mt-1 font-sans text-2xl font-bold text-[#111827] sm:text-3xl">&ldquo;{query}&rdquo;</h2>
+        <p className="mt-1 font-sans text-sm text-slate-500">
+          {events.length} {events.length === 1 ? 'event' : 'events'}
+        </p>
       </div>
+      {events.length === 0 ? (
+        <p className="text-sm text-[#6B7280]">No events match your search. Try different keywords.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {events.map((event, index) => (
+            <EventCard key={`search-${event.id || index}`} event={event} layout="grid" />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -359,6 +384,16 @@ export default function HomePage() {
     });
   }, [events, searchQuery]);
 
+  const searchResultsSorted = useMemo(() => {
+    const query = searchQuery.trim();
+    if (!query) return [];
+    return [...searchableEvents].sort((a, b) => {
+      const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      return aDate - bDate;
+    });
+  }, [searchableEvents, searchQuery]);
+
   const activeTags = useMemo(() => {
     const tags = new Set();
     searchableEvents.forEach((event) => {
@@ -423,6 +458,8 @@ export default function HomePage() {
     document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  const isSearchActive = searchQuery.trim().length > 0;
+
   return (
     <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(3rem,env(safe-area-inset-bottom))]">
       <Header scrolled={scrolled} />
@@ -433,10 +470,13 @@ export default function HomePage() {
         onPillClick={handlePillClick}
         searchQuery={searchQuery}
         onSearchQuery={setSearchQuery}
+        showPills={!isSearchActive}
       />
 
       {loading ? (
         <section className="mx-auto max-w-7xl px-4 py-10 text-[#6B7280] sm:px-6 lg:px-12">Loading events...</section>
+      ) : isSearchActive ? (
+        <SearchResultsSection query={searchQuery.trim()} events={searchResultsSorted} />
       ) : (
         <section id="events" className="mx-auto max-w-7xl pb-10">
           {sections.map((section) => (
