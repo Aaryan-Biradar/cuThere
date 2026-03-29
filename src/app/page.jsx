@@ -170,17 +170,17 @@ function Hero() {
         className="absolute inset-0 z-0 h-full w-full object-cover object-[center_35%] sm:object-center"
       />
 
-      {/* 2. Horizontal Scrim — desktop only; mobile uses bottom gradient for text */}
-      <div className="absolute inset-0 z-[1] hidden bg-gradient-to-r from-black/50 via-black/20 to-transparent sm:block" />
+      {/* 2. Horizontal Scrim — lighter on narrow screens so it still reads as a fade without crushing the image */}
+      <div className="absolute inset-0 z-[1] bg-gradient-to-r from-black/40 via-black/12 to-transparent sm:from-black/50 sm:via-black/20" />
 
-      {/* 3. Bottom Fade — stronger on mobile so title reads; cream fade on desktop */}
-      <div className="absolute inset-x-0 bottom-0 z-[5] h-28 bg-gradient-to-t from-black/70 via-black/35 to-transparent sm:h-64 sm:from-[#FCFAF7] sm:via-[#FCFAF7]/80 sm:to-transparent" />
+      {/* 3. Bottom Fade — cream at bottom matches page bg (#FCFAF7) on all breakpoints so the hero blends into the section below; mobile strip is shorter */}
+      <div className="absolute inset-x-0 bottom-0 z-[5] h-32 bg-gradient-to-t from-[#FCFAF7] via-[#FCFAF7]/60 to-transparent sm:h-64" />
 
       {/* Mobile: vertically center copy in the hero band below the fixed header; desktop: unchanged layout */}
       <div className="relative z-10 mx-auto flex h-full min-h-0 max-w-7xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+4rem)] pb-4 sm:block sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
         <div className="flex min-h-0 flex-1 flex-col items-start justify-center text-left sm:block">
           <h1
-            className="max-w-3xl text-2xl font-bold leading-tight text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
+            className="max-w-3xl text-2xl font-bold leading-tight tracking-[-0.03em] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
             style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
           >
             Discover the Best
