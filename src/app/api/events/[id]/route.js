@@ -19,6 +19,7 @@ export async function GET(request, { params }) {
         e.event_title AS title, 
         e.event_description AS description, 
         e.event_date AS date, 
+        e.event_date AS event_date,
         e.event_time AS time, 
         e.event_location AS location,
         e.displayUrl AS displayUrl,
@@ -42,8 +43,11 @@ export async function GET(request, { params }) {
         tagsArray = parsed.filter(Boolean);
       } catch (e) {}
     }
+    const normalizedDate = eventRaw.date || eventRaw.event_date || '';
     const event = {
       ...eventRaw,
+      date: normalizedDate,
+      event_date: normalizedDate,
       tags: tagsArray,
       category: tagsArray.length > 0 ? tagsArray[0] : 'Uncategorized'
     };

@@ -4,23 +4,27 @@ import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 
+function normalizeDateString(dateString) {
+  if (!dateString) return '';
+  const trimmed = String(dateString).trim();
+  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
+}
+
 function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const parsed = new Date(`${dateString}T00:00:00`);
+  const candidate = normalizeDateString(dateString);
+  if (!candidate) return null;
+  let parsed = new Date(candidate);
+  if (Number.isNaN(parsed.getTime())) {
+    parsed = new Date(`${candidate} ${new Date().getFullYear()}`);
+  }
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function formatEventDateTime(date, time) {
-  if (!date && !time) return 'Date and time TBA';
-  const parsed = parseEventDate(date);
-  const dateLabel = parsed
-    ? parsed.toLocaleDateString('en-CA', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
-    : 'Date TBA';
-  return `${dateLabel} • ${time || 'Time TBA'}`;
+  const normalized = normalizeDateString(date || '');
+  if (!normalized && !time) return 'Date and time TBA';
+  const dateLabel = normalized || 'Date TBA';
+  return time ? `${dateLabel} • ${time}` : dateLabel;
 }
 
 export default function EventDetailPage() {
@@ -147,8 +151,8 @@ export default function EventDetailPage() {
         className="mx-auto min-h-screen overflow-hidden bg-white md:my-10 md:min-h-0 md:max-w-2xl md:rounded-3xl md:shadow-2xl"
       >
         <section className="relative aspect-[16/10] w-full bg-[#F3F4F6] sm:aspect-[16/9]">
-          {event.image_url ? (
-            <img src={event.image_url} alt={event.title} className="h-full w-full object-cover" />
+          {event.displayUrl ? (
+            <img src={`/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}`} alt={event.title} className="h-full w-full object-cover" />
           ) : (
             <img src="/image.png" alt="Carleton University campus" className="h-full w-full object-cover" />
           )}
@@ -169,7 +173,7 @@ export default function EventDetailPage() {
             <h1 className="font-sans text-3xl font-black leading-tight tracking-tight text-[#111827] sm:text-4xl">{event.title || 'Untitled Event'}</h1>
 
             <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-              <p className="text-sm font-semibold text-slate-600 sm:text-base">{formatEventDateTime(event.date, event.time)}</p>
+              <p className="text-sm font-semibold text-slate-600 sm:text-base">{formatEventDateTime(event.date || event.event_date, event.time)}</p>
               <span className="inline-flex w-fit items-center rounded-full bg-[#D71920] px-3 py-1 text-xs font-bold tracking-wide text-white">
                 {event.location || 'Carleton Campus'}
               </span>

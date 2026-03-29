@@ -3,16 +3,26 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+function normalizeDateString(dateString) {
+  if (!dateString) return '';
+  const trimmed = String(dateString).trim();
+  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
+}
+
 function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const d = new Date(`${dateString}T00:00:00`);
+  const candidate = normalizeDateString(dateString);
+  if (!candidate) return null;
+
+  let d = new Date(candidate);
+  if (Number.isNaN(d.getTime())) {
+    d = new Date(`${candidate} ${new Date().getFullYear()}`);
+  }
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function formatEventDate(date) {
-  const d = parseEventDate(date);
-  if (!d) return 'Date TBA';
-  return d.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' });
+  const normalized = normalizeDateString(date || '');
+  return normalized || 'Date TBA';
 }
 
 export default function EventModal({ eventId }) {
@@ -131,7 +141,7 @@ export default function EventModal({ eventId }) {
               {/* Compact hero-style image band (similar vibe to main Hero, smaller) */}
               <div className="relative h-36 w-full shrink-0 overflow-hidden bg-[#F3F4F6] sm:h-44 md:h-48">
                 <img
-                  src={event.image_url || '/image.png'}
+                  src={event.displayUrl ? `/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}` : '/image.png'}
                   alt={event.title || 'Event'}
                   className="h-full w-full object-cover object-[center_35%]"
                 />
@@ -154,7 +164,7 @@ export default function EventModal({ eventId }) {
                     {event.title || 'Untitled Event'}
                   </h2>
                   <p className="font-sans text-sm font-bold text-[#D71920] sm:text-base">
-                    {formatEventDate(event.date)}{event.time ? ` • ${event.time}` : ''}
+                    {formatEventDate(event.date || event.event_date)}{event.time ? ` • ${event.time}` : ''}
                   </p>
                   {event.location && (
                     <p className="inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-[#D71920]">

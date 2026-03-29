@@ -2,9 +2,20 @@
 
 import { useRouter } from 'next/navigation';
 
+function normalizeDateString(dateString) {
+  if (!dateString) return '';
+  const trimmed = String(dateString).trim();
+  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
+}
+
 function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const date = new Date(`${dateString}T00:00:00`);
+  const candidate = normalizeDateString(dateString);
+  if (!candidate) return null;
+
+  let date = new Date(candidate);
+  if (Number.isNaN(date.getTime())) {
+    date = new Date(`${candidate} ${new Date().getFullYear()}`);
+  }
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -20,12 +31,10 @@ function isTodayEvent(dateString) {
 }
 
 function formatEventDateTime(date, time) {
-  if (!date && !time) return 'Date and time TBA';
-  const parsed = parseEventDate(date);
-  const dateLabel = parsed
-    ? parsed.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
-    : 'Date TBA';
-  return `${dateLabel} · ${time || 'Time TBA'}`;
+  const normalized = normalizeDateString(date || '');
+  if (!normalized && !time) return 'Date and time TBA';
+  const dateLabel = normalized || 'Date TBA';
+  return time ? `${dateLabel} · ${time}` : dateLabel;
 }
 
 export default function EventCard({ event, layout = 'carousel' }) {
@@ -52,6 +61,13 @@ export default function EventCard({ event, layout = 'carousel' }) {
       aria-label={`Open event: ${event?.title || 'Untitled event'}`}
     >
       <div className="relative h-40 w-full border-b border-[#E5E7EB] bg-[#F3F4F6]">
+        {event?.displayUrl && (
+          <img
+            src={`/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}`}
+            alt={event?.title || 'Event'}
+            className="h-full w-full object-cover"
+          />
+        )}
         {showTodayBadge && (
           <span className="absolute left-3 top-3 rounded-full bg-[#D71920] px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
             ● TODAY
@@ -61,7 +77,7 @@ export default function EventCard({ event, layout = 'carousel' }) {
 
       <div className="space-y-2 p-5">
         <h3 className="line-clamp-2 font-sans text-lg font-bold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
-        <p className="font-sans text-sm font-bold text-[#D71920]">{formatEventDateTime(event?.date, event?.time)}</p>
+        <p className="font-sans text-sm font-bold text-[#D71920]">{formatEventDateTime(event?.date || event?.event_date, event?.time)}</p>
         <p className="inline-flex line-clamp-1 items-center gap-1.5 font-sans text-xs font-medium text-[#6B7280]">
           <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#9CA3AF]" fill="none" aria-hidden="true">
             <path

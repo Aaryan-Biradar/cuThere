@@ -4,13 +4,25 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import EventCard from '@/components/EventCard';
 import EventModal from '@/components/EventModal';
-import { LOCAL_FALLBACK_EVENTS, TEST_EVENT, TODAY_EVENT_TWO } from '@/lib/demo-events';
 
-const DEFAULT_TAG_PILLS = ['All', 'Today', 'This Week', 'Academic', 'Social', 'Sports', 'Career', 'Cultural', 'Wellness', 'Tech'];
+const DEFAULT_TAG_PILLS = ['All', 'Today', 'This Week'];
+
+function normalizeDateString(dateString) {
+  if (!dateString) return '';
+  const trimmed = String(dateString).trim();
+  // convert "March 18th" to "March 18"
+  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
+}
 
 function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const date = new Date(`${dateString}T00:00:00`);
+  const candidate = normalizeDateString(dateString);
+  if (!candidate) return null;
+
+  let date = new Date(candidate);
+  if (Number.isNaN(date.getTime())) {
+    // Try with current year for partial date strings (e.g. "March 18")
+    date = new Date(`${candidate} ${new Date().getFullYear()}`);
+  }
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -35,16 +47,10 @@ function isSameDay(a, b) {
 }
 
 function formatEventDateTime(eventDate, eventTime) {
-  if (!eventDate && !eventTime) return 'Date and time TBA';
-  const parsed = parseEventDate(eventDate);
-  const dateLabel = parsed
-    ? parsed.toLocaleDateString('en-CA', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
-    : 'Date TBA';
-  return `${dateLabel} • ${eventTime || 'Time TBA'}`;
+  const normalized = normalizeDateString(eventDate || '');
+  if (!normalized && !eventTime) return 'Date and time TBA';
+  const dateLabel = normalized || 'Date TBA';
+  return eventTime ? `${dateLabel} • ${eventTime}` : dateLabel;
 }
 
 function slugifySection(title) {
@@ -247,7 +253,7 @@ function HomePage() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get('event');
 
-  const [events, setEvents] = useState(LOCAL_FALLBACK_EVENTS);
+  const [events, setEvents] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const [activePill, setActivePill] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -264,12 +270,12 @@ function HomePage() {
             category: event.category || event.source_platform || 'Academic',
             tags: event.tags || [event.category || event.source_platform || 'Academic'],
           }));
-          setEvents([TEST_EVENT, TODAY_EVENT_TWO, ...normalized]);
+          setEvents(normalized);
         } else {
-          setEvents(LOCAL_FALLBACK_EVENTS);
+          setEvents([]);
         }
       } catch (error) {
-        setEvents(LOCAL_FALLBACK_EVENTS);
+        setEvents([]);
       } finally {
         setLoading(false);
       }
