@@ -175,6 +175,19 @@ export default function EventModal({ eventId }) {
                       {event.location}
                     </p>
                   )}
+
+                  {event.hosts && event.hosts.length > 0 && (
+                    <div className="mt-2 rounded-xl bg-[#FFF7ED] p-3 text-sm text-[#92400E]">
+                      <p className="font-bold uppercase tracking-wide text-xs text-[#B45309]">Hosted by</p>
+                      <ul className="mt-1 list-disc pl-5">
+                        {event.hosts.map((host, index) => (
+                          <li key={`${host}-${index}`} className="leading-5">
+                            {host}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 {event.description && (

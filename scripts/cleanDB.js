@@ -1,12 +1,13 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import { DB_PATH } from '../src/lib/db.js';
 
 async function buildDatabase() {
     console.log("🚀 Booting up the Database Builder...");
 
     // 1. Open the database (it will create cuthere.db if it doesn't exist)
     const db = await open({
-        filename: './cuthere.db',
+        filename: DB_PATH,
         driver: sqlite3.Database
     });
 
@@ -14,10 +15,10 @@ async function buildDatabase() {
 
     // Clean slate: drop tables if you ever need to re-run the script
     await db.exec(`
-        DROP TABLE IF EXISTS STUDENT_FOLLOWS;
-        DROP TABLE IF EXISTS EVENT_TAGS;
-        DROP TABLE IF EXISTS EVENT_HOSTS;
-        DROP TABLE IF EXISTS RSVP;
+        DROP TABLE IF EXISTS FOLLOWS;
+        DROP TABLE IF EXISTS CATEGORIZED_AS;
+        DROP TABLE IF EXISTS HOSTS;
+        DROP TABLE IF EXISTS RSVPs;
         DROP TABLE IF EXISTS CATEGORY;
         DROP TABLE IF EXISTS EVENT;
         DROP TABLE IF EXISTS ORGANIZATION;
@@ -50,7 +51,7 @@ async function buildDatabase() {
             displayUrl TEXT
         );
 
-        CREATE TABLE EVENT_HOSTS (
+        CREATE TABLE HOSTS (
             event_id TEXT,
             org_id TEXT,
             PRIMARY KEY (event_id, org_id),
@@ -64,7 +65,7 @@ async function buildDatabase() {
             category_description TEXT
         );
 
-        CREATE TABLE RSVP (
+        CREATE TABLE RSVPs (
             student_id TEXT NOT NULL,
             event_id TEXT NOT NULL,
             rsvp_status TEXT NOT NULL,
@@ -73,7 +74,7 @@ async function buildDatabase() {
             FOREIGN KEY (event_id) REFERENCES EVENT(event_id)
         );
 
-        CREATE TABLE EVENT_TAGS (
+        CREATE TABLE CATEGORIZED_AS (
             event_id TEXT NOT NULL,
             category_id TEXT NOT NULL,
             PRIMARY KEY (event_id, category_id),
@@ -81,7 +82,7 @@ async function buildDatabase() {
             FOREIGN KEY (category_id) REFERENCES CATEGORY(category_id)
         );
 
-        CREATE TABLE STUDENT_FOLLOWS (
+        CREATE TABLE FOLLOWS (
             student_id TEXT NOT NULL,
             category_id TEXT NOT NULL,
             PRIMARY KEY (student_id, category_id),

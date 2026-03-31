@@ -33,7 +33,7 @@ export async function POST(request) {
 
     // Step 3: Insert RSVP
     await db.run(`
-      INSERT INTO RSVP (student_id, event_id, rsvp_status) 
+      INSERT INTO RSVPs (student_id, event_id, rsvp_status) 
       VALUES (?, ?, 'going')
       ON CONFLICT(student_id, event_id) DO UPDATE SET rsvp_status = 'going'
     `, [user_name, event_id]);
@@ -41,7 +41,7 @@ export async function POST(request) {
     // Get updated RSVP count
     let rsvp_count = 1;
     try {
-      const countRow = await db.get(`SELECT count(*) as count FROM RSVP WHERE event_id = ?`, [event_id]);
+      const countRow = await db.get(`SELECT count(*) as count FROM RSVPs WHERE event_id = ?`, [event_id]);
       rsvp_count = countRow ? countRow.count : 1;
     } catch(e) {}
 
@@ -67,12 +67,12 @@ export async function DELETE(request) {
     });
 
     // Remove the RSVP record
-    await db.run(`DELETE FROM RSVP WHERE student_id = ? AND event_id = ?`, [user_name, event_id]);
+    await db.run(`DELETE FROM RSVPs WHERE student_id = ? AND event_id = ?`, [user_name, event_id]);
 
     // Get updated RSVP count
     let rsvp_count = 0;
     try {
-      const countRow = await db.get(`SELECT count(*) as count FROM RSVP WHERE event_id = ?`, [event_id]);
+      const countRow = await db.get(`SELECT count(*) as count FROM RSVPs WHERE event_id = ?`, [event_id]);
       rsvp_count = countRow ? countRow.count : 0;
     } catch(e) {}
 

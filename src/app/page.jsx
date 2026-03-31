@@ -127,11 +127,11 @@ function Hero() {
   );
 }
 
-function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery, showPills = true }) {
+function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery, onSearchSubmit, showPills = true }) {
   return (
     <section id="events-anchor" className="relative z-20 mx-auto max-w-7xl -mt-6 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 lg:px-12">
-      {/* Search bar */}
-      <div className="relative group">
+      {/* Search bar target backend SQL */}
+      <form onSubmit={onSearchSubmit} className="relative group">
         <svg
           className="absolute left-5 top-1/2 h-[20px] w-[20px] -translate-y-1/2 text-gray-400 group-focus-within:text-[#D71920] transition-colors"
           viewBox="0 0 24 24"
@@ -146,10 +146,10 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
           type="search"
           value={searchQuery}
           onChange={(e) => onSearchQuery(e.target.value)}
-          placeholder="Search Carleton events, clubs, or topics..."
+          placeholder="Search Carleton events, clubs, or topics (press Enter)..."
           className="w-full rounded-full border border-gray-200 bg-white py-4 pl-12 pr-6 font-sans text-base font-medium text-slate-800 shadow-sm placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-4 focus:ring-[#D71920]/5 transition-all"
         />
-      </div>
+      </form>
 
       {/* Filter pills — hidden while searching so results are one clear list */}
       {showPills && (
@@ -257,7 +257,35 @@ function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [activePill, setActivePill] = useState('All');
   const [loading, setLoading] = useState(true);
+  
+  // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  async function handleSearchSubmit(e) {
+    if (e) e.preventDefault();
+    const query = searchQuery.trim();
+    setActiveSearchQuery(query);
+    
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/events/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setSearchResults(data);
+    } catch(err) {
+      console.error(err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchEvents() {
@@ -291,44 +319,15 @@ function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const searchableEvents = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return events;
-
-    return events.filter((event) => {
-      const searchable = [
-        event.title,
-        event.description,
-        event.location,
-        event.category,
-        ...(event.tags || []),
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return searchable.includes(query);
-    });
-  }, [events, searchQuery]);
-
-  const searchResultsSorted = useMemo(() => {
-    const query = searchQuery.trim();
-    if (!query) return [];
-    return [...searchableEvents].sort((a, b) => {
-      const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
-      const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
-      return aDate - bDate;
-    });
-  }, [searchableEvents, searchQuery]);
-
   const activeTags = useMemo(() => {
     const tags = new Set();
-    searchableEvents.forEach((event) => {
+    events.forEach((event) => {
       (event.tags || []).forEach((tag) => tags.add(tag));
       if (event.category) tags.add(event.category);
     });
 
     return Array.from(tags).sort((a, b) => a.localeCompare(b));
-  }, [searchableEvents]);
+  }, [events]);
 
   const pillLabels = useMemo(() => {
     const ordered = [];
@@ -348,7 +347,7 @@ function HomePage() {
     const today = startOfDay(new Date());
     const weekEnd = addDays(today, 7);
 
-    const sorted = [...searchableEvents].sort((a, b) => {
+    const sorted = [...events].sort((a, b) => {
       const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
       const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
       return aDate - bDate;
@@ -376,7 +375,7 @@ function HomePage() {
       { title: 'This Week', sectionId: slugifySection('This Week'), events: weekEvents },
       ...tagSections,
     ];
-  }, [searchableEvents, activeTags]);
+  }, [events, activeTags]);
 
   function handlePillClick(pill) {
     setActivePill(pill);
@@ -384,7 +383,7 @@ function HomePage() {
     document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  const isSearchActive = searchQuery.trim().length > 0;
+  const isSearchActive = activeSearchQuery.trim().length > 0;
 
   // Lock background scroll when modal is open
   useEffect(() => {
@@ -406,13 +405,19 @@ function HomePage() {
         onPillClick={handlePillClick}
         searchQuery={searchQuery}
         onSearchQuery={setSearchQuery}
+        onSearchSubmit={handleSearchSubmit}
         showPills={!isSearchActive}
       />
 
       {loading ? (
         <section className="mx-auto max-w-7xl px-4 py-10 text-[#6B7280] sm:px-6 lg:px-12">Loading events...</section>
+      ) : isSearching ? (
+        <section className="mx-auto max-w-7xl px-4 py-10 text-[#6B7280] sm:px-6 lg:px-12 flex justify-center items-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-r-transparent border-[#D71920]"></div>
+            <span className="ml-3 font-medium text-slate-600">Searching database...</span>
+        </section>
       ) : isSearchActive ? (
-        <SearchResultsSection query={searchQuery.trim()} events={searchResultsSorted} />
+        <SearchResultsSection query={activeSearchQuery} events={searchResults} />
       ) : (
         <section id="events" className="mx-auto max-w-7xl pb-10">
           {sections.map((section) => (

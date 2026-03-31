@@ -103,3 +103,5 @@ GEMINI_API_KEY=your_gemini_key
 - Fix the scraper typo: `scrapper.js` → `scraper.js`
 - The `masterTags` list in `ai.js` should stay in sync with the seed categories in `seed-db.js` — consider extracting to a shared constant in `src/lib/constants.js` if they drift
 - Find a better method to verify an event (original note preserved)
+- Standerize the input from gemini (ex: event_date, sometimes says Monday Jan 1st, but I just want 1st)
+- change the event names to be display names not ig handle

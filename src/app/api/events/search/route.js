@@ -3,15 +3,26 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import { DB_PATH } from '@/lib/db';
 
-// GET /api/events
-export async function GET() {
+// GET /api/events/search?q=query
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get('q');
+    
+    // Fallback: If no query, return empty list (frontend handles reverting to full list)
+    if (!q || !q.trim()) {
+      return NextResponse.json([]);
+    }
+    
     const db = await open({
       filename: DB_PATH,
       driver: sqlite3.Database
     });
 
-    // Use json_group_array to aggregate tag names and hosts
+    const searchQuery = `%${q.toLowerCase()}%`;
+
+    // Grouping by event_id ensures we only return unique events 
+    // even if multiple tags/hosts match the query strings snippet.
     const events = await db.all(`
       SELECT 
         e.event_id AS id, 
@@ -28,30 +39,35 @@ export async function GET() {
       LEFT JOIN CATEGORY c ON et.category_id = c.category_id
       LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
       LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
+      WHERE LOWER(e.event_title) LIKE ?
+         OR LOWER(e.event_description) LIKE ?
+         OR LOWER(e.event_location) LIKE ?
+         OR LOWER(c.category_name) LIKE ?
+         OR LOWER(o.org_name) LIKE ?
+         OR LOWER(o.org_id) LIKE ?
       GROUP BY e.event_id
-    `);
+      ORDER BY e.event_date ASC
+    `, [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]);
 
-    // Map the stringified tag and host arrays to JS arrays properly
     const mappedEvents = events.map(evt => {
       let tagsArray = [];
       if (evt.tags) {
          try {
            const parsed = JSON.parse(evt.tags);
            tagsArray = parsed.filter(Boolean); // Filter out [null]
-         } catch(e) { /* ignore parse errors */ }
+         } catch(e) {}
       }
       let hostsArray = [];
       if (evt.hosts) {
          try {
            const parsed = JSON.parse(evt.hosts);
            hostsArray = parsed.filter(Boolean); // Filter out [null]
-         } catch(e) { /* ignore parse errors */ }
+         } catch(e) {}
       }
-      const normalizedDate = evt.date || evt.event_date || '';
+      const normalizedDate = evt.event_date || '';
       return {
         ...evt,
         date: normalizedDate,
-        event_date: normalizedDate,
         tags: tagsArray,
         hosts: hostsArray,
         category: tagsArray.length > 0 ? tagsArray[0] : 'Uncategorized'
@@ -60,7 +76,7 @@ export async function GET() {
 
     return NextResponse.json(mappedEvents);
   } catch (error) {
-    console.error('Error fetching events from DB:', error);
+    console.error('Error executing SQL search capability:', error);
     return NextResponse.json([], { status: 500 });
   }
 }

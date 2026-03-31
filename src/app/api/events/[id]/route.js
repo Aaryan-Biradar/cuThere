@@ -23,10 +23,13 @@ export async function GET(request, { params }) {
         e.event_time AS time, 
         e.event_location AS location,
         e.displayUrl AS displayUrl,
-        json_group_array(c.category_name) as tags
+        json_group_array(DISTINCT c.category_name) as tags,
+        json_group_array(DISTINCT o.org_name) as hosts
       FROM EVENT e
-      LEFT JOIN EVENT_TAGS et ON e.event_id = et.event_id
+      LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
       LEFT JOIN CATEGORY c ON et.category_id = c.category_id
+      LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
+      LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
       WHERE e.event_id = ?
       GROUP BY e.event_id
     `, [id]);
@@ -35,12 +38,19 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    // Map tags
+    // Map tags and hosts
     let tagsArray = [];
     if (eventRaw.tags) {
       try {
         const parsed = JSON.parse(eventRaw.tags);
         tagsArray = parsed.filter(Boolean);
+      } catch (e) {}
+    }
+    let hostsArray = [];
+    if (eventRaw.hosts) {
+      try {
+        const parsed = JSON.parse(eventRaw.hosts);
+        hostsArray = parsed.filter(Boolean);
       } catch (e) {}
     }
     const normalizedDate = eventRaw.date || eventRaw.event_date || '';
@@ -49,6 +59,7 @@ export async function GET(request, { params }) {
       date: normalizedDate,
       event_date: normalizedDate,
       tags: tagsArray,
+      hosts: hostsArray,
       category: tagsArray.length > 0 ? tagsArray[0] : 'Uncategorized'
     };
 
@@ -62,10 +73,13 @@ export async function GET(request, { params }) {
         e.event_time AS time, 
         e.event_location AS location,
         e.displayUrl AS displayUrl,
-        json_group_array(c.category_name) as tags
+        json_group_array(DISTINCT c.category_name) as tags,
+        json_group_array(DISTINCT o.org_name) as hosts
       FROM EVENT e
-      LEFT JOIN EVENT_TAGS et ON e.event_id = et.event_id
+      LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
       LEFT JOIN CATEGORY c ON et.category_id = c.category_id
+      LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
+      LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
       WHERE e.event_id != ? AND (e.event_date = ? OR e.event_location = ?)
       GROUP BY e.event_id
       LIMIT 5
@@ -76,9 +90,14 @@ export async function GET(request, { params }) {
       if (evt.tags) {
         try { tArray = JSON.parse(evt.tags).filter(Boolean); } catch (e) {}
       }
+      let hArray = [];
+      if (evt.hosts) {
+        try { hArray = JSON.parse(evt.hosts).filter(Boolean); } catch (e) {}
+      }
       return {
         ...evt,
         tags: tArray,
+        hosts: hArray,
         category: tArray.length > 0 ? tArray[0] : 'Uncategorized'
       };
     });
@@ -88,7 +107,7 @@ export async function GET(request, { params }) {
     // If it doesn't exist, we fallback to 0.
     let rsvp_count = 0;
     try {
-      const rsvpCountRow = await db.get(`SELECT count(*) as count FROM RSVP WHERE event_id = ?`, [id]);
+      const rsvpCountRow = await db.get(`SELECT count(*) as count FROM RSVPs WHERE event_id = ?`, [id]);
       rsvp_count = rsvpCountRow ? rsvpCountRow.count : 0;
     } catch (err) {
       // Table might not be fully migrated or querying issues

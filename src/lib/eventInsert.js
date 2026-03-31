@@ -1,11 +1,12 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import { DB_PATH } from './db.js';
 
 // The function now takes the dynamic AI data, the original post ID, and scraper metadata as parameters
 export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption }) {
     // 1. Open the existing database
     const db = await open({
-        filename: './cuthere.db',
+        filename: DB_PATH,
         driver: sqlite3.Database
     });
 
@@ -18,10 +19,10 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
         // Build a unified array of all host usernames
         // The owner always comes first, then any co-authors
         const allHosts = [
-            { username: ownerUsername, displayName: ownerFullName },
+            { username: ownerUsername, displayName: ownerFullName || ownerUsername },
             ...(coauthorProducers || []).map(co => ({
                 username: co.username,
-                displayName: co.username // fallback: use username as org_name
+                displayName: co.fullName || co.username // grab full name if available
             }))
         ];
 
@@ -31,11 +32,11 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `, [
             newEventId, 
-            eventData.eventName, 
+            eventData.eventName || 'Untitled Event', 
             caption, 
-            eventData.date, 
-            eventData.time, 
-            eventData.location, 
+            eventData.date || 'Date TBA', 
+            eventData.time || 'Time TBA', 
+            eventData.location || 'Location TBA', 
             displayUrl
         ]);
 
@@ -47,9 +48,9 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
                 VALUES (?, ?)
             `, [host.username, host.displayName]);
 
-            // b. Link this host to the event in the EVENT_HOSTS junction table
+            // b. Link this host to the event in the HOSTS junction table
             await db.run(`
-                INSERT INTO EVENT_HOSTS (event_id, org_id) 
+                INSERT INTO HOSTS (event_id, org_id) 
                 VALUES (?, ?)
             `, [newEventId, host.username]);
         }
@@ -66,7 +67,7 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
                 if (existingCategory) {
                     // If it's a valid curated tag, link it to the event!
                     await db.run(`
-                        INSERT INTO EVENT_TAGS (event_id, category_id) 
+                        INSERT INTO CATEGORIZED_AS (event_id, category_id) 
                         VALUES (?, ?)
                     `, [newEventId, existingCategory.category_id]);
                 } else {
