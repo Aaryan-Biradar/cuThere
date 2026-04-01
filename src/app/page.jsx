@@ -74,7 +74,7 @@ function Header({ scrolled }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'bg-black border-b border-white/10 shadow-sm' : 'bg-transparent'
+        scrolled ? 'bg-[#E8E4DF] border-b border-[#E8E4DF] shadow-md' : 'bg-transparent'
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
