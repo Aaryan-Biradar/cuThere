@@ -24,7 +24,7 @@ export async function isEvent(imageUrl, caption) {
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [
-            `Instructions: Look at this image and caption. Is this promoting a specific event (with a date, time, or location)? Respond with ONLY "yes" or "no", nothing else.`,
+            `Instructions: Look at this image and caption. Is this promoting a specific event (with a date, time, and location)? at least 2/3 of these must be present. Respond with ONLY "yes" or "no", nothing else.`,
             `Caption: ${caption}`,
             { inlineData: { data: base64Image, mimeType: "image/jpeg" } }
         ]
@@ -44,6 +44,44 @@ export async function analyzeFlyer(imageUrl, caption) {
         ${JSON.stringify(masterTags)}
         
         Do not invent new tags. If none apply, return an empty array [].
+
+        CRITICAL RULE FOR DATES:
+        The "date" should just be the month and the day (e.g., "March 20" or "April 5"). Do not include the year or the day of the week (like "Tuesday, ").
+
+        CRITICAL RULE FOR TIMES:
+        The "time" should be in the format like "1:00PM" or "11:00AM - 2:00PM" if it's a range.
+
+        CRITICAL RULE FOR LOCATIONS:
+        The "location" should be the full name of the building. Use the following key to map Carleton building codes to their full names:
+        AA: Architecture Building
+        AC: Athletics Building
+        AP: Azrieli Pavilion
+        AT: Azrieli Theatre
+        CB: Canal Building
+        DT: Dunton Tower
+        FH: Field House
+        HC: Human Computer Interaction Building
+        HP: Herzberg Laboratories
+        HS: Health Sciences Building
+        LA: Loeb Building
+        MC: Minto Centre 
+        ME: Mackenzie Building
+        ML: MacOdrum Library
+        NB: Nesbitt Biology Building
+        NI: Nicol Building
+        NN: Nideyinàn 
+        PA: Paterson Hall
+        PK: Pigiarvik (formerly Robertson Hall)
+        RB: Richcraft Hall
+        SA: Southam Hall
+        SC: Steacie Building
+        SP: St. Patrick's Building
+        TB: Tory Building
+        TC: Teraanga Commons
+        TT: Carleton Technology and Training Center
+        VS: Visualization & Simulation Building (VSM)
+        
+        For example, if you see "ME 3380", your location should be "Mackenzie Building 3380".
 
         Expected JSON format:
         {
