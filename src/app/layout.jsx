@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-    title: 'cuThere — Discover Local Events',
-    description: 'Browse and RSVP to events scraped from Instagram.',
+    title: 'cuThere',
+    description: 'Browse events scraped from Instagram.',
 };
 
 /** Ensures mobile browsers / WebView use the device width instead of a default ~980px layout. */

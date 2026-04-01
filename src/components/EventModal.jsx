@@ -30,10 +30,6 @@ export default function EventModal({ eventId }) {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState('');
 
   // Trigger CSS enter transition one frame after mount
   useEffect(() => {
@@ -46,9 +42,6 @@ export default function EventModal({ eventId }) {
     if (!eventId) return;
     setLoading(true);
     setEvent(null);
-    setFeedback('');
-    setName('');
-    setEmail('');
 
     fetch(`/api/events/${eventId}`)
       .then((r) => r.json())
@@ -66,42 +59,6 @@ export default function EventModal({ eventId }) {
 
   function close() {
     router.push('/', { scroll: false });
-  }
-
-  async function handleRsvp(e) {
-    e.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      setFeedback('Please fill in both fields.');
-      return;
-    }
-    setSubmitting(true);
-    setFeedback('');
-    try {
-      // Demo events have no DB row — show success locally
-      if (event?.is_demo) {
-        setFeedback("You're in! (demo event)");
-        setEvent((prev) => ({ ...prev, rsvp_count: (prev.rsvp_count || 0) + 1 }));
-        setName('');
-        setEmail('');
-        return;
-      }
-
-      const res = await fetch('/api/rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: event.id, user_name: name.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setFeedback(data?.error || 'Could not submit RSVP.'); return; }
-      setFeedback("You're in! RSVP saved.");
-      setEvent((prev) => ({ ...prev, rsvp_count: data.rsvp_count }));
-      setName('');
-      setEmail('');
-    } catch {
-      setFeedback('Could not submit RSVP right now.');
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   return (
@@ -158,7 +115,7 @@ export default function EventModal({ eventId }) {
               </div>
 
               {/* Event info */}
-              <div className="space-y-5 px-5 pb-6 pt-5 sm:px-8">
+              <div className="space-y-5 px-5 pb-8 pt-5 sm:px-8">
                 <div className="space-y-1.5">
                   <h2 className="font-sans text-2xl font-black leading-tight tracking-tight text-[#111827] sm:text-3xl">
                     {event.title || 'Untitled Event'}
@@ -193,46 +150,7 @@ export default function EventModal({ eventId }) {
                 {event.description && (
                   <p className="text-[15px] leading-7 text-slate-700">{event.description}</p>
                 )}
-
-                <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Attending</p>
-                  <p className="mt-1 text-2xl font-black text-[#111827]">{event.rsvp_count || 0}</p>
-                  <p className="text-xs text-slate-500">people RSVP&apos;d so far</p>
-                </div>
               </div>
-            </div>
-
-            {/* Sticky RSVP */}
-            <div className="shrink-0 border-t border-[#E5E7EB] bg-[#FCFAF7] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-8">
-              <form onSubmit={handleRsvp} className="space-y-3">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">RSVP</p>
-                <div className="flex gap-2.5 sm:gap-3">
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Name"
-                    className="min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-medium text-[#111827] outline-none transition focus:border-[#D71920] focus:ring-2 focus:ring-[#D71920]/10"
-                  />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    className="min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-medium text-[#111827] outline-none transition focus:border-[#D71920] focus:ring-2 focus:ring-[#D71920]/10"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full rounded-full bg-[#D71920] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#BE161C] disabled:opacity-60"
-                >
-                  {submitting ? 'Submitting…' : 'RSVP Now'}
-                </button>
-                {feedback && (
-                  <p className="text-center text-sm font-medium text-slate-600">{feedback}</p>
-                )}
-              </form>
             </div>
           </>
         )}

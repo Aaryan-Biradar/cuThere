@@ -57,6 +57,19 @@ function slugifySection(title) {
   return `section-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 }
 
+function uniqueByEventId(items) {
+  const seen = new Set();
+  return items.filter((event, index) => {
+    const key =
+      event?.id != null && event?.id !== ''
+        ? `id:${String(event.id)}`
+        : `fallback:${event?.title || ''}-${event?.date || ''}-${index}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function Header({ scrolled }) {
   return (
     <header
@@ -65,20 +78,22 @@ function Header({ scrolled }) {
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium tracking-[0.18em] text-white">
+        <span className="inline-flex items-center rounded-full border border-white bg-white/10 px-4 py-2 text-sm font-medium tracking-[0.18em] text-white">
           LOGO / NAME
         </span>
 
         <div className="ml-auto flex items-center gap-2">
           <a
             href="/about"
-            className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/45 hover:bg-white/15"
+            className="rounded-full border border-white bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:border-white/45 hover:bg-white/15"
+            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
           >
             About
           </a>
           <a
             href="/feedback"
-            className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/45 hover:bg-white/15"
+            className="rounded-full border border-white bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:border-white/45 hover:bg-white/15"
+            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
           >
             Feedback
           </a>

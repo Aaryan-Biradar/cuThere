@@ -32,10 +32,6 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
@@ -81,41 +77,6 @@ export default function EventDetailPage() {
           transition: { duration: 0.32, ease: 'easeOut' },
         };
   }, [isMobile]);
-
-  async function handleRsvp(eventObj) {
-    eventObj.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      setFeedback('Please enter your name and email.');
-      return;
-    }
-
-    setSubmitting(true);
-    setFeedback('');
-    try {
-      const payload = { event_id: event?.id ?? id, user_name: name.trim() };
-      const res = await fetch('/api/rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setFeedback(data?.error || 'Could not submit RSVP right now.');
-        return;
-      }
-
-      setFeedback('You are in! RSVP saved.');
-      const refreshed = await fetch(`/api/events/${id}`);
-      const refreshedData = await refreshed.json();
-      setEvent(refreshedData);
-      setName('');
-      setEmail('');
-    } catch (error) {
-      setFeedback('Could not submit RSVP right now.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -168,7 +129,7 @@ export default function EventDetailPage() {
           </a>
         </section>
 
-        <section className="space-y-6 px-5 pb-24 pt-6 sm:px-8 sm:pb-10">
+        <section className="space-y-6 px-5 pb-10 pt-6 sm:px-8">
           <div className="space-y-3">
             <h1 className="font-sans text-3xl font-black leading-tight tracking-tight text-[#111827] sm:text-4xl">{event.title || 'Untitled Event'}</h1>
 
@@ -186,40 +147,6 @@ export default function EventDetailPage() {
               {event.description || 'More details about this event will be shared soon.'}
             </p>
           </div>
-
-          <div className="rounded-2xl border border-gray-100 bg-[#FCFAF7] p-4 sm:p-5">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Attending</p>
-            <p className="mt-2 text-2xl font-black text-[#111827]">{event.rsvp_count || 0}</p>
-            <p className="text-sm text-slate-500">people RSVP&apos;d so far</p>
-          </div>
-        </section>
-
-        <section className="sticky bottom-0 z-20 border-t border-gray-100 bg-white/95 px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 backdrop-blur md:static md:border-t-0 md:bg-white md:px-8 md:pb-8">
-          <form onSubmit={handleRsvp} className="space-y-3">
-            <h3 className="text-sm font-extrabold uppercase tracking-[0.12em] text-slate-500">RSVP</h3>
-            <input
-              type="text"
-              value={name}
-              onChange={(eventObj) => setName(eventObj.target.value)}
-              placeholder="Name"
-              className="w-full rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm font-medium text-[#111827] outline-none transition focus:border-[#D71920] focus:ring-2 focus:ring-[#D71920]/10"
-            />
-            <input
-              type="email"
-              value={email}
-              onChange={(eventObj) => setEmail(eventObj.target.value)}
-              placeholder="Email"
-              className="w-full rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm font-medium text-[#111827] outline-none transition focus:border-[#D71920] focus:ring-2 focus:ring-[#D71920]/10"
-            />
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-full bg-[#D71920] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#BE161C] disabled:cursor-not-allowed disabled:opacity-75"
-            >
-              {submitting ? 'Submitting...' : 'RSVP Now'}
-            </button>
-            {feedback ? <p className="text-sm font-medium text-slate-600">{feedback}</p> : null}
-          </form>
         </section>
       </motion.article>
     </main>
