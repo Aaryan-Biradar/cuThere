@@ -11,15 +11,14 @@
     },
     "dependencies": {
         "@google/genai": "^1.47.0",
+        "@libsql/client": "^0.17.2",
         "apify-client": "^2.9.0",
         "better-sqlite3": "^11.0.0",
         "dotenv": "^16.6.1",
         "framer-motion": "^12.38.0",
         "next": "^15.3.0",
         "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "sqlite": "^5.1.1",
-        "sqlite3": "^6.0.1"
+        "react-dom": "^19.2.0"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.2.2",

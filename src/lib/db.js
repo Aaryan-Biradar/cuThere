@@ -1,6 +1,13 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createClient } from '@libsql/client';
+import dotenv from 'dotenv';
 
-// Standardized database path (pointing to data/cuthere.db from the root)
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const DB_PATH = path.join(__dirname, '..', '..', 'data', 'cuthere.db');
+// Load environment variables for standalone Node.js scripts
+dotenv.config({ path: '.env' });
+
+// Shared Turso client (serverless SQLite) — reused across all API routes
+const db = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
+
+export default db;

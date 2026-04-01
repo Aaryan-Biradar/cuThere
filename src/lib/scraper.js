@@ -9,32 +9,29 @@ const client = new ApifyClient({
 // Prepare Actor input
 const input = {
     "dataDetailLevel": "basicData",
-    "resultsLimit": 5,
+    "resultsLimit": 1,
     "skipPinnedPosts": true,
     "username": [
         "https://www.instagram.com/carletoncss",
-        "https://www.instagram.com/ieeecarleton",
+        "https://www.instagram.com/ieeecarleton/",
         "https://www.instagram.com/carletonscisoc",
         "https://www.instagram.com/cuscesoc",
         "https://www.instagram.com/carletonbitsociety/",
-        "https://www.instagram.com/animalrightscarletonofficial/",
+        "https://www.instagram.com/animalrightscarleton/",
         "https://www.instagram.com/AnimeCarleton/",
         "https://www.instagram.com/asaottawa/",
-        "https://www.instagram.com/asiancanadians_carleton/",
         "https://www.instagram.com/azsaottawa/",
         "https://www.instagram.com/carletonbitsociety/",
         "https://www.instagram.com/bswss.cu/",
         "https://www.instagram.com/carleton_biocare/",
         "https://www.instagram.com/bsacarletonu",
-        "https://www.instagram.com/carletonbridges/",
+        "https://www.instagram.com/carleton_bridgestudyclub/",
         "https://www.instagram.com/camskids_carletonu/",
         "https://www.instagram.com/cscecarleton/",
         "https://www.instagram.com/csacarleton/",
         "https://www.instagram.com/carleton.asa/",
         "https://www.instagram.com/carletonaisociety/",
-        "https://www.instagram.com/cu.catl/",
         "https://www.instagram.com/_cahus/",
-        "https://www.instagram.com/cuartshowcase/",
         "https://www.instagram.com/cu_badminton_club/",
         "https://www.instagram.com/cubookartssociety/",
         "https://www.instagram.com/carleton.cusec/",
@@ -97,7 +94,6 @@ const input = {
         "https://www.instagram.com/cuphilosophysociety/",
         "https://www.instagram.com/carletonuphoto/",
         "https://www.instagram.com/cuphyssoc/",
-        "https://www.instagram.com/cu_reactors/",
         "https://www.instagram.com/carletonussa/",
         "https://www.instagram.com/carletonstrategyclub/",
         "https://www.instagram.com/carletonadmirals/",
@@ -107,7 +103,6 @@ const input = {
         "https://www.instagram.com/cuwomenflagfootball/",
         "https://www.instagram.com/cuwritersguild/",
         "https://www.instagram.com/ccocampus/",
-        "https://instagram.com/TespaCarleton/",
         "https://www.instagram.com/carletonu_inspace/",
         "https://www.instagram.com/rflcarleton/",
         "https://www.instagram.com/cuhacking/",
@@ -123,7 +118,6 @@ const input = {
         "https://www.instagram.com/healthtechinnovators/",
         "https://www.instagram.com/hccarleton/",
         "https://www.instagram.com/hillelottawa/",
-        "https://www.instagram.com/hta.club",
         "https://www.instagram.com/h.o.l.a.s/",
         "https://www.instagram.com/ijvcarleton/",
         "https://www.instagram.com/intervarsity_cu/",
@@ -138,11 +132,9 @@ const input = {
         "https://www.instagram.com/csnottawa/",
         "https://www.instagram.com/susa.carleton/",
         "https://www.instagram.com/thenavigatorsca/",
-        "https://www.instagram.com/thepoeticssocietycu/",
-        "https://www.instagram.com/cuturkic/",
+        "https://www.instagram.com/thepoeticsocietycu/",
         "https://www.instagram.com/aevsaott/",
         "https://www.instagram.com/visualartscarleton/",
-        "https://instagram.com/ysa_ottawa/",
         "https://www.instagram.com/carletonbookravens/"
     ]
 };
@@ -157,9 +149,9 @@ export async function scrapeLatestPost() {
     // Fetch Actor results from the run's dataset
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    items.forEach((item) => {
-        console.dir(item);
-    });
+    // items.forEach((item) => {
+    //     console.dir(item);
+    // });
 
     console.log(`🕷️  Scraper found ${items.length} post(s)`);
     return items;
