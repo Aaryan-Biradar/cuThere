@@ -1,35 +1,32 @@
 import { NextResponse } from 'next/server';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import { DB_PATH } from '@/lib/db';
+import db from '@/lib/db';
 
 // GET /api/events
 export async function GET() {
   try {
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
-    });
-
     // Use json_group_array to aggregate tag names and hosts
-    const events = await db.all(`
-      SELECT 
-        e.event_id AS id, 
-        e.event_title AS title, 
-        e.event_description AS description, 
-        e.event_date AS event_date,
-        e.event_time AS time, 
-        e.event_location AS location,
-        e.displayUrl AS displayUrl,
-        json_group_array(DISTINCT c.category_name) as tags,
-        json_group_array(DISTINCT o.org_name) as hosts
-      FROM EVENT e
-      LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
-      LEFT JOIN CATEGORY c ON et.category_id = c.category_id
-      LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
-      LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
-      GROUP BY e.event_id
-    `);
+    const result = await db.execute({
+      sql: `
+        SELECT 
+          e.event_id AS id, 
+          e.event_title AS title, 
+          e.event_description AS description, 
+          e.event_date AS event_date,
+          e.event_time AS time, 
+          e.event_location AS location,
+          e.displayUrl AS displayUrl,
+          json_group_array(DISTINCT c.category_name) as tags,
+          json_group_array(DISTINCT o.org_name) as hosts
+        FROM EVENT e
+        LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
+        LEFT JOIN CATEGORY c ON et.category_id = c.category_id
+        LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
+        LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
+        GROUP BY e.event_id
+      `,
+      args: []
+    });
+    const events = result.rows;
 
     // Map the stringified tag and host arrays to JS arrays properly
     const mappedEvents = events.map(evt => {

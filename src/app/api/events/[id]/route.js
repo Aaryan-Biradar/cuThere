@@ -1,38 +1,35 @@
 import { NextResponse } from 'next/server';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import { DB_PATH } from '@/lib/db';
+import db from '@/lib/db';
 
 export async function GET(request, { params }) {
   const { id } = await params;
 
   try {
-    const db = await open({
-        filename: DB_PATH,
-        driver: sqlite3.Database
-    });
-
     // 1. Fetch the specific event
-    const eventRaw = await db.get(`
-      SELECT 
-        e.event_id AS id, 
-        e.event_title AS title, 
-        e.event_description AS description, 
-        e.event_date AS date, 
-        e.event_date AS event_date,
-        e.event_time AS time, 
-        e.event_location AS location,
-        e.displayUrl AS displayUrl,
-        json_group_array(DISTINCT c.category_name) as tags,
-        json_group_array(DISTINCT o.org_name) as hosts
-      FROM EVENT e
-      LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
-      LEFT JOIN CATEGORY c ON et.category_id = c.category_id
-      LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
-      LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
-      WHERE e.event_id = ?
-      GROUP BY e.event_id
-    `, [id]);
+    const eventResult = await db.execute({
+      sql: `
+        SELECT 
+          e.event_id AS id, 
+          e.event_title AS title, 
+          e.event_description AS description, 
+          e.event_date AS date, 
+          e.event_date AS event_date,
+          e.event_time AS time, 
+          e.event_location AS location,
+          e.displayUrl AS displayUrl,
+          json_group_array(DISTINCT c.category_name) as tags,
+          json_group_array(DISTINCT o.org_name) as hosts
+        FROM EVENT e
+        LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
+        LEFT JOIN CATEGORY c ON et.category_id = c.category_id
+        LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
+        LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
+        WHERE e.event_id = ?
+        GROUP BY e.event_id
+      `,
+      args: [id]
+    });
+    const eventRaw = eventResult.rows[0];
 
     if (!eventRaw) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
@@ -64,26 +61,30 @@ export async function GET(request, { params }) {
     };
 
     // 2. Fetch related events (same date OR location), excluding the current event
-    const relatedRaw = await db.all(`
-      SELECT 
-        e.event_id AS id, 
-        e.event_title AS title, 
-        e.event_description AS description, 
-        e.event_date AS date, 
-        e.event_time AS time, 
-        e.event_location AS location,
-        e.displayUrl AS displayUrl,
-        json_group_array(DISTINCT c.category_name) as tags,
-        json_group_array(DISTINCT o.org_name) as hosts
-      FROM EVENT e
-      LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
-      LEFT JOIN CATEGORY c ON et.category_id = c.category_id
-      LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
-      LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
-      WHERE e.event_id != ? AND (e.event_date = ? OR e.event_location = ?)
-      GROUP BY e.event_id
-      LIMIT 5
-    `, [id, event.date, event.location]);
+    const relatedResult = await db.execute({
+      sql: `
+        SELECT 
+          e.event_id AS id, 
+          e.event_title AS title, 
+          e.event_description AS description, 
+          e.event_date AS date, 
+          e.event_time AS time, 
+          e.event_location AS location,
+          e.displayUrl AS displayUrl,
+          json_group_array(DISTINCT c.category_name) as tags,
+          json_group_array(DISTINCT o.org_name) as hosts
+        FROM EVENT e
+        LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
+        LEFT JOIN CATEGORY c ON et.category_id = c.category_id
+        LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
+        LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
+        WHERE e.event_id != ? AND (e.event_date = ? OR e.event_location = ?)
+        GROUP BY e.event_id
+        LIMIT 5
+      `,
+      args: [id, event.date, event.location]
+    });
+    const relatedRaw = relatedResult.rows;
 
     const related = relatedRaw.map(evt => {
       let tArray = [];
@@ -107,7 +108,11 @@ export async function GET(request, { params }) {
     // If it doesn't exist, we fallback to 0.
     let rsvp_count = 0;
     try {
-      const rsvpCountRow = await db.get(`SELECT count(*) as count FROM RSVPs WHERE event_id = ?`, [id]);
+      const rsvpResult = await db.execute({
+        sql: `SELECT count(*) as count FROM RSVPs WHERE event_id = ?`,
+        args: [id]
+      });
+      const rsvpCountRow = rsvpResult.rows[0];
       rsvp_count = rsvpCountRow ? rsvpCountRow.count : 0;
     } catch (err) {
       // Table might not be fully migrated or querying issues

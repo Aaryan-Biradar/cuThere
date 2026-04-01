@@ -1,9 +1,7 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite'; //SQLite wrapper for JS
 import { scrapeLatestPost } from './scraper.js';
 import { isEvent, analyzeFlyer } from './ai.js';
 import { insertEventToDatabase } from './eventInsert.js';
-import { DB_PATH } from './db.js';
+import db from './db.js';
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -27,12 +25,6 @@ async function executeWithRetry(operation, maxRetries = 3, delayMs = 4000) {
 async function runPipeline() {
     console.log("=== 🚀 CuThere Pipeline Starting ===\n");
 
-    // Open DB connection for duplicate checking
-    const db = await open({
-        filename: DB_PATH,
-        driver: sqlite3.Database
-    });
-
     // STEP 1: Scrape the latest posts from Instagram
     console.log("--- Step 1: Scraping Instagram ---");
     const posts = await scrapeLatestPost();
@@ -49,9 +41,11 @@ async function runPipeline() {
             console.log(`   Caption: "${post.caption?.substring(0, 50)}..."`);
 
             // STEP 2: Check if this post already exists in the DB
-        const existing = await db.get(`
-            SELECT event_id FROM EVENT WHERE event_id = ?
-        `, [postId]);
+        const result = await db.execute({
+            sql: `SELECT event_id FROM EVENT WHERE event_id = ?`,
+            args: [postId]
+        });
+        const existing = result.rows[0];
 
         if (existing) {
             console.log(`   ⏭️  Already in database. Skipping.`);
@@ -73,17 +67,17 @@ async function runPipeline() {
         const eventData = await executeWithRetry(() => analyzeFlyer(post.displayUrl, post.caption));
         console.log("   Parsed event data:", eventData);
 
-        // STEP 4: Insert the structured data into SQLite
+        // STEP 5: Insert the structured data into Turso
         console.log("   💾 Inserting into Database...");
         try {
-            const result = await insertEventToDatabase(eventData, postId, {
+            const insertResult = await insertEventToDatabase(eventData, postId, {
                 ownerUsername: post.ownerUsername,
                 ownerFullName: post.ownerFullName,
                 coauthorProducers: post.coauthorProducers,
                 displayUrl: post.displayUrl,
                 caption: post.caption
             });
-            console.log(`   ✅ Inserted! Event ID: ${result.eventId}`);
+            console.log(`   ✅ Inserted! Event ID: ${insertResult.eventId}`);
         } catch (error) {
             console.error("   ❌ Pipeline Failed:", error.message);
             console.log("   ⏭️  Continuing to next post...");

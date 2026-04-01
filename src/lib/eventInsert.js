@@ -1,14 +1,7 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import { DB_PATH } from './db.js';
+import db from './db.js';
 
 // The function now takes the dynamic AI data, the original post ID, and scraper metadata as parameters
 export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption }) {
-    // 1. Open the existing database
-    const db = await open({
-        filename: DB_PATH,
-        driver: sqlite3.Database
-    });
 
     console.log(`📥 Processing new event: ${eventData.eventName}...`);
 
@@ -27,32 +20,41 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
         ];
 
         // 2. Insert the core Event into the EVENT table (no org_id anymore)
-        await db.run(`
-            INSERT INTO EVENT (event_id, event_title, event_description, event_date, event_time, event_location, displayUrl) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [
-            newEventId, 
-            eventData.eventName || 'Untitled Event', 
-            caption, 
-            eventData.date || 'Date TBA', 
-            eventData.time || 'Time TBA', 
-            eventData.location || 'Location TBA', 
-            displayUrl
-        ]);
+        await db.execute({
+            sql: `
+                INSERT INTO EVENT (event_id, event_title, event_description, event_date, event_time, event_location, displayUrl) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `,
+            args: [
+                newEventId, 
+                eventData.eventName || 'Untitled Event', 
+                caption, 
+                eventData.date || 'Date TBA', 
+                eventData.time || 'Time TBA', 
+                eventData.location || 'Location TBA', 
+                displayUrl
+            ]
+        });
 
         // 3. Loop through all hosts and link them via the junction table
         for (const host of allHosts) {
             // a. Safely insert the organization (ignores if it already exists)
-            await db.run(`
-                INSERT OR IGNORE INTO ORGANIZATION (org_id, org_name) 
-                VALUES (?, ?)
-            `, [host.username, host.displayName]);
+            await db.execute({
+                sql: `
+                    INSERT OR IGNORE INTO ORGANIZATION (org_id, org_name) 
+                    VALUES (?, ?)
+                `,
+                args: [host.username, host.displayName]
+            });
 
             // b. Link this host to the event in the HOSTS junction table
-            await db.run(`
-                INSERT INTO HOSTS (event_id, org_id) 
-                VALUES (?, ?)
-            `, [newEventId, host.username]);
+            await db.execute({
+                sql: `
+                    INSERT INTO HOSTS (event_id, org_id) 
+                    VALUES (?, ?)
+                `,
+                args: [newEventId, host.username]
+            });
         }
 
         // 4. Safely link Categories (Strict Multi-Select) — existing N:N logic
@@ -60,16 +62,23 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
             for (const tag of eventData.tags) {
                 
                 // First, check if the tag Gemini picked actually exists in our DB
-                const existingCategory = await db.get(`
-                    SELECT category_id FROM CATEGORY WHERE category_name = ?
-                `, [tag]);
+                const result = await db.execute({
+                    sql: `
+                        SELECT category_id FROM CATEGORY WHERE category_name = ?
+                    `,
+                    args: [tag]
+                });
+                const existingCategory = result.rows[0];
 
                 if (existingCategory) {
                     // If it's a valid curated tag, link it to the event!
-                    await db.run(`
-                        INSERT INTO CATEGORIZED_AS (event_id, category_id) 
-                        VALUES (?, ?)
-                    `, [newEventId, existingCategory.category_id]);
+                    await db.execute({
+                        sql: `
+                            INSERT INTO CATEGORIZED_AS (event_id, category_id) 
+                            VALUES (?, ?)
+                        `,
+                        args: [newEventId, existingCategory.category_id]
+                    });
                 } else {
                     // If Gemini hallucinated a tag, we just ignore it and log it
                     console.warn(`⚠️ Ignored invalid tag from Gemini: "${tag}"`);
@@ -77,7 +86,7 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
             }
         }
 
-        console.log("✅ Pipeline Success: Event securely inserted into SQLite!");
+        console.log("✅ Pipeline Success: Event securely inserted into Turso!");
         
         // Return success so your API route knows it worked
         return { success: true, eventId: newEventId };

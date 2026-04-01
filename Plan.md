@@ -105,3 +105,4 @@ GEMINI_API_KEY=your_gemini_key
 - Find a better method to verify an event (original note preserved)
 - Standerize the input from gemini (ex: event_date, sometimes says Monday Jan 1st, but I just want 1st)
 - change the event names to be display names not ig handle
+- search doenst have to be through SQL

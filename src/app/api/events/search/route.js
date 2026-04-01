@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import { DB_PATH } from '@/lib/db';
+import db from '@/lib/db';
 
 // GET /api/events/search?q=query
 export async function GET(request) {
@@ -13,41 +11,40 @@ export async function GET(request) {
     if (!q || !q.trim()) {
       return NextResponse.json([]);
     }
-    
-    const db = await open({
-      filename: DB_PATH,
-      driver: sqlite3.Database
-    });
 
     const searchQuery = `%${q.toLowerCase()}%`;
 
     // Grouping by event_id ensures we only return unique events 
     // even if multiple tags/hosts match the query strings snippet.
-    const events = await db.all(`
-      SELECT 
-        e.event_id AS id, 
-        e.event_title AS title, 
-        e.event_description AS description, 
-        e.event_date AS event_date,
-        e.event_time AS time, 
-        e.event_location AS location,
-        e.displayUrl AS displayUrl,
-        json_group_array(DISTINCT c.category_name) as tags,
-        json_group_array(DISTINCT o.org_name) as hosts
-      FROM EVENT e
-      LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
-      LEFT JOIN CATEGORY c ON et.category_id = c.category_id
-      LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
-      LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
-      WHERE LOWER(e.event_title) LIKE ?
-         OR LOWER(e.event_description) LIKE ?
-         OR LOWER(e.event_location) LIKE ?
-         OR LOWER(c.category_name) LIKE ?
-         OR LOWER(o.org_name) LIKE ?
-         OR LOWER(o.org_id) LIKE ?
-      GROUP BY e.event_id
-      ORDER BY e.event_date ASC
-    `, [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]);
+    const result = await db.execute({
+      sql: `
+        SELECT 
+          e.event_id AS id, 
+          e.event_title AS title, 
+          e.event_description AS description, 
+          e.event_date AS event_date,
+          e.event_time AS time, 
+          e.event_location AS location,
+          e.displayUrl AS displayUrl,
+          json_group_array(DISTINCT c.category_name) as tags,
+          json_group_array(DISTINCT o.org_name) as hosts
+        FROM EVENT e
+        LEFT JOIN CATEGORIZED_AS et ON e.event_id = et.event_id
+        LEFT JOIN CATEGORY c ON et.category_id = c.category_id
+        LEFT JOIN HOSTS eh ON e.event_id = eh.event_id
+        LEFT JOIN ORGANIZATION o ON eh.org_id = o.org_id
+        WHERE LOWER(e.event_title) LIKE ?
+           OR LOWER(e.event_description) LIKE ?
+           OR LOWER(e.event_location) LIKE ?
+           OR LOWER(c.category_name) LIKE ?
+           OR LOWER(o.org_name) LIKE ?
+           OR LOWER(o.org_id) LIKE ?
+        GROUP BY e.event_id
+        ORDER BY e.event_date ASC
+      `,
+      args: [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]
+    });
+    const events = result.rows;
 
     const mappedEvents = events.map(evt => {
       let tagsArray = [];
