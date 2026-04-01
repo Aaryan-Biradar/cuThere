@@ -9,6 +9,7 @@ on:
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
+    environment: Production # <-- This tells GitHub where to find your secrets!
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,5 +28,5 @@ jobs:
           # These pull from your GitHub repository secrets
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          APIFY_TOKEN: ${{ secrets.APIFY_API_TOKEN }} 
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
