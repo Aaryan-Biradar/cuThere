@@ -1,0 +1,30 @@
+name: Daily Event Scraper
+
+on:
+  schedule:
+    # Runs at 2:00 AM UTC every day.
+    - cron: '0 2 * * *'
+  workflow_dispatch: # This adds a "Run workflow" button in GitHub so you can test it manually
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Matching your local environment
+
+      - name: Install dependencies
+        run: npm ci # Uses package-lock.json for a clean install
+
+      - name: Run pipeline
+        run: node src/lib/main.js
+        env:
+          # These pull from your GitHub repository secrets
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
