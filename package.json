@@ -10,6 +10,7 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@ducanh2912/next-pwa": "^10.2.9",
         "@google/genai": "^1.47.0",
         "@libsql/client": "^0.17.2",
         "apify-client": "^2.9.0",
@@ -27,5 +28,8 @@
         "eslint-config-next": "^15.3.0",
         "postcss": "^8.5.8",
         "tailwindcss": "^4.2.2"
+    },
+    "overrides": {
+        "serialize-javascript": "^7.0.5"
     }
 }

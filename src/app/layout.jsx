@@ -2,7 +2,11 @@ import './globals.css';
 
 export const metadata = {
     title: 'cuThere — Discover Local Events',
-    description: 'Browse and RSVP to events scraped from Instagram.',
+    description: 'Browse and RSVP to campus events instantly.',
+    manifest: '/manifest.json',
+    icons: {
+        apple: '/icons/icon-192x192.png',
+    },
 };
 
 /** Ensures mobile browsers / WebView use the device width instead of a default ~980px layout. */
@@ -11,6 +15,7 @@ export const viewport = {
     initialScale: 1,
     /** Enables env(safe-area-inset-*) for notched phones & Capacitor WebView */
     viewportFit: 'cover',
+    themeColor: '#000000',
 };
 
 export default function RootLayout({ children }) {
