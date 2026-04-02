@@ -75,7 +75,8 @@ async function runPipeline() {
                 ownerFullName: post.ownerFullName,
                 coauthorProducers: post.coauthorProducers,
                 displayUrl: post.displayUrl,
-                caption: post.caption
+                caption: post.caption,
+                postUrl: post.url
             });
             console.log(`   ✅ Inserted! Event ID: ${insertResult.eventId}`);
         } catch (error) {

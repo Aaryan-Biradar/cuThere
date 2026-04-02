@@ -26,6 +26,7 @@ export async function GET(request) {
           e.event_time AS time, 
           e.event_location AS location,
           e.displayUrl AS displayUrl,
+          e.postUrl AS postUrl,
           json_group_array(DISTINCT c.category_name) as tags,
           json_group_array(DISTINCT o.org_name) as hosts
         FROM EVENT e

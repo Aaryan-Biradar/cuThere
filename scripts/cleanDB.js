@@ -41,7 +41,8 @@ async function buildDatabase() {
             event_date TEXT NOT NULL, 
             event_time TEXT NOT NULL,
             event_location TEXT NOT NULL,
-            displayUrl TEXT
+            displayUrl TEXT,
+            postUrl TEXT
         );`,
         `CREATE TABLE HOSTS (
             event_id TEXT,
