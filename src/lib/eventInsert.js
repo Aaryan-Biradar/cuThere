@@ -1,7 +1,7 @@
 import db from './db.js';
 
 // The function now takes the dynamic AI data, the original post ID, and scraper metadata as parameters
-export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption }) {
+export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption, postUrl }) {
 
     console.log(`📥 Processing new event: ${eventData.eventName}...`);
 
@@ -22,8 +22,8 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
         // 2. Insert the core Event into the EVENT table (no org_id anymore)
         await db.execute({
             sql: `
-                INSERT INTO EVENT (event_id, event_title, event_description, event_date, event_time, event_location, displayUrl) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO EVENT (event_id, event_title, event_description, event_date, event_time, event_location, displayUrl, postUrl) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `,
             args: [
                 newEventId, 
@@ -32,7 +32,8 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
                 eventData.date || 'Date TBA', 
                 eventData.time || 'Time TBA', 
                 eventData.location || 'Location TBA', 
-                displayUrl
+                displayUrl,
+                postUrl || null
             ]
         });
 
