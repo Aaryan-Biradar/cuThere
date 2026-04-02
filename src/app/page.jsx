@@ -70,6 +70,22 @@ function uniqueByEventId(items) {
   });
 }
 
+function BrandLogo({ variant = 'header' }) {
+  const isHeader = variant === 'header';
+  return (
+    <a
+      href="/"
+      className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium tracking-[0.18em] transition ${
+        isHeader
+          ? 'border border-white bg-white/10 text-white hover:bg-white/15'
+          : 'border border-[#E5E7EB] bg-white text-[#111827] shadow-[0_1px_4px_rgba(17,24,39,0.04)] hover:border-[#D71920]/30'
+      }`}
+    >
+      cuThere
+    </a>
+  );
+}
+
 function Header({ scrolled }) {
   return (
     <header
@@ -78,9 +94,7 @@ function Header({ scrolled }) {
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <span className="inline-flex items-center rounded-full border border-white bg-white/10 px-4 py-2 text-sm font-medium tracking-[0.18em] text-white">
-          LOGO / NAME
-        </span>
+        <BrandLogo variant="header" />
 
         <div className="ml-auto flex items-center gap-2">
           <a
@@ -100,6 +114,18 @@ function Header({ scrolled }) {
         </div>
       </div>
     </header>
+  );
+}
+
+function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-8 sm:px-6 lg:px-12">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+        <BrandLogo variant="footer" />
+        <p className="font-sans text-xs text-[#6B7280]">© {year}</p>
+      </div>
+    </footer>
   );
 }
 
@@ -445,6 +471,8 @@ function HomePage() {
           ))}
         </section>
       )}
+
+      <Footer />
 
       {eventId && <EventModal eventId={eventId} />}
     </main>
