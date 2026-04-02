@@ -1,9 +1,29 @@
 import { ApifyClient } from 'apify-client';
 import 'dotenv/config';
 
-// Initialize the ApifyClient with API token    
+// 1. Group the keys into an array
+const apifyKeys = [
+    process.env.APIFY_API_TOKEN_1,
+    process.env.APIFY_API_TOKEN_2,
+    process.env.APIFY_API_TOKEN_3,
+    process.env.APIFY_API_TOKEN_4
+].filter(Boolean); // This ensures it doesn't crash if you temporarily only have 2 keys
+
+// 2. Grab the GitHub run number. If you run this locally on your laptop, it defaults to 0.
+const runNumber = parseInt(process.env.RUN_NUMBER || "0", 10);
+
+// 3. Modulo Math! 
+// If runNumber is 4: 4 % 3 = 1 (Uses Key #2)
+// If runNumber is 5: 5 % 3 = 2 (Uses Key #3)
+// If runNumber is 6: 6 % 3 = 0 (Loops back to Key #1)
+const keyIndex = runNumber % apifyKeys.length;
+const selectedApifyToken = apifyKeys[keyIndex];
+
+console.log(`🔄 Key Rotation Active: Using Apify Key #${keyIndex + 1} for this run.`);
+
+// 4. Initialize Apify with the winning key
 const client = new ApifyClient({
-    token: process.env.APIFY_API_TOKEN,
+    token: selectedApifyToken
 });
 
 // Prepare Actor input
