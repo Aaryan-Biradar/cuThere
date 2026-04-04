@@ -1,4 +1,4 @@
-/** Client-side demo events for EventCard / modal UI checks. Does not touch the DB or API routes. */
+/** Client-side demo events for EventCard / event page UI checks. Does not touch the DB or API routes. */
 
 export const UI_TEST_EVENT_ID = '__ui_test_event__';
 

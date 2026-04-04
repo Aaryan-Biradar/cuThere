@@ -41,6 +41,7 @@ export default function EventCard({ event, layout = 'carousel' }) {
   const router = useRouter();
   const hasId = event?.id != null && event?.id !== '';
   const showTodayBadge = isTodayEvent(event?.date);
+  const eventHref = hasId ? `/events/${encodeURIComponent(String(event.id))}` : '#';
 
   const widthClass =
     layout === 'grid'
@@ -50,12 +51,12 @@ export default function EventCard({ event, layout = 'carousel' }) {
   function handleClick(e) {
     if (!hasId) return;
     e.preventDefault();
-    router.push(`?event=${event.id}`, { scroll: false });
+    router.push(eventHref);
   }
 
   return (
     <a
-      href={hasId ? `?event=${event.id}` : '#'}
+      href={eventHref}
       onClick={handleClick}
       className={`group block cursor-pointer overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass} `}
       aria-label={`Open event: ${event?.title || 'Untitled event'}`}      

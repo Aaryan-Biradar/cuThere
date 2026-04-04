@@ -1,9 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import EventCard from '@/components/EventCard';
-import EventModal from '@/components/EventModal';
 import { getUiTestEvents, isUiTestEventId } from '@/lib/ui-test-event';
 
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
@@ -305,9 +303,6 @@ function EventSection({ title, sectionId, events }) {
 }
 
 function HomePage() {
-  const searchParams = useSearchParams();
-  const eventId = searchParams.get('event');
-
   const [events, setEvents] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const [activePill, setActivePill] = useState('All');
@@ -434,16 +429,6 @@ function HomePage() {
 
   const isSearchActive = activeSearchQuery.trim().length > 0;
 
-  // Lock background scroll when modal is open
-  useEffect(() => {
-    if (eventId) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [eventId]);
-
   return (
     <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(3rem,env(safe-area-inset-bottom))]">
       <Header scrolled={scrolled} />
@@ -481,8 +466,6 @@ function HomePage() {
       )}
 
       <Footer />
-
-      {eventId && <EventModal eventId={eventId} />}
     </main>
   );
 }
