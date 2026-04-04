@@ -41,35 +41,36 @@ export default function EventCard({ event, layout = 'carousel' }) {
   const router = useRouter();
   const hasId = event?.id != null && event?.id !== '';
   const showTodayBadge = isTodayEvent(event?.date);
+  const eventHref = hasId ? `/events/${encodeURIComponent(String(event.id))}` : '#';
 
   const widthClass =
     layout === 'grid'
-      ? 'w-full max-w-none'
+      ? 'h-full min-w-0 w-full max-w-none'
       : 'w-[min(16rem,calc(100vw-2.5rem))] shrink-0 sm:w-64';
 
   function handleClick(e) {
     if (!hasId) return;
     e.preventDefault();
-    router.push(`?event=${event.id}`, { scroll: false });
+    router.push(eventHref);
   }
 
   return (
     <a
-      href={hasId ? `?event=${event.id}` : '#'}
+      href={eventHref}
       onClick={handleClick}
-      className={`group block cursor-pointer overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass}`}
-      aria-label={`Open event: ${event?.title || 'Untitled event'}`}
+      className={`group block cursor-pointer overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass} `}
+      aria-label={`Open event: ${event?.title || 'Untitled event'}`}      
     >
-      <div className="relative h-40 w-full border-b border-[#E5E7EB] bg-[#F3F4F6]">
+      <div className="relative aspect-square w-full bg-[#0A0A0A] overflow-hidden border-b border-[#E5E7EB]">
         {event?.displayUrl && (
           <img
             src={`/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}`}
             alt={event?.title || 'Event'}
-            className="h-full w-full object-cover"
+            className="absolute inset-0 z-10 h-full w-full object-cover object-center"
           />
         )}
         {showTodayBadge && (
-          <span className="absolute left-3 top-3 rounded-full bg-[#D71920] px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
+          <span className="absolute left-3 top-3 z-20 rounded-full bg-[#D71920] px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
             ● TODAY
           </span>
         )}

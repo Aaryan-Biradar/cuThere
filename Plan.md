@@ -47,7 +47,7 @@ cuThere/
 ## Key Changes When Migrating
 
 ### 1. `src/lib/db.js` — Upgrade Schema to 3NF
-The current `db.js` has a flat `events` + `rsvps` schema. Replace it with the full 3NF schema from `cleanDB.js`:
+The current `db.js` has a flat `events` schema. Replace it with the full 3NF schema from `cleanDB.js`:
 
 - **STUDENT** — user accounts
 - **ORGANIZATION** — clubs/orgs (keyed by IG username)
@@ -55,7 +55,6 @@ The current `db.js` has a flat `events` + `rsvps` schema. Replace it with the fu
 - **EVENT_HOSTS** — many-to-many junction (event ↔ orgs)
 - **CATEGORY** — curated tag list (seeded on first run)
 - **EVENT_TAGS** — many-to-many junction (event ↔ categories)
-- **RSVP** — student ↔ event attendance
 - **STUDENT_FOLLOWS** — student ↔ category subscriptions
 
 ### 2. `src/lib/eventInsert.js` — Swap SQLite Driver
