@@ -1,11 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import EventCard from '@/components/EventCard';
 import EventModal from '@/components/EventModal';
+import { getUiTestEvents, isUiTestEventId } from '@/lib/ui-test-event';
 
-const DEFAULT_TAG_PILLS = ['All', 'Today', 'This Week'];
+const DEFAULT_TAG_PILLS = ['All', 'This Week'];
+const sideMargin = 'lg:px-37';
 
 function normalizeDateString(dateString) {
   if (!dateString) return '';
@@ -38,14 +40,6 @@ function addDays(date, amount) {
   return copy;
 }
 
-function isSameDay(a, b) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
 function formatEventDateTime(eventDate, eventTime) {
   const normalized = normalizeDateString(eventDate || '');
   if (!normalized && !eventTime) return 'Date and time TBA';
@@ -70,14 +64,16 @@ function uniqueByEventId(items) {
   });
 }
 
-function BrandLogo({ variant = 'header' }) {
+function BrandLogo({ variant = 'header', scrolled = false }) {
   const isHeader = variant === 'header';
   return (
     <a
       href="/"
       className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium tracking-[0.18em] transition ${
         isHeader
-          ? 'border border-white bg-white/10 text-white hover:bg-white/15'
+          ? scrolled
+            ? 'border border-[#E5E7EB] bg-white text-black hover:border-[#D71920]/30'
+            : 'border border-white bg-white/10 text-white hover:bg-white/15'
           : 'border border-[#E5E7EB] bg-white text-[#111827] shadow-[0_1px_4px_rgba(17,24,39,0.04)] hover:border-[#D71920]/30'
       }`}
     >
@@ -90,24 +86,22 @@ function Header({ scrolled }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'bg-[#E8E4DF] border-b border-[#E8E4DF] shadow-md' : 'bg-transparent'
+        scrolled ? 'bg-[#FCFAF7] border-b border-[#FCFAF7] shadow-md' : 'bg-transparent'
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" />
+        <BrandLogo variant="header" scrolled={scrolled} />
 
         <div className="ml-auto flex items-center gap-2">
           <a
             href="/about"
-            className="rounded-full border border-white bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:border-white/45 hover:bg-white/15"
-            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
+            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
           >
             About
           </a>
           <a
             href="/feedback"
-            className="rounded-full border border-white bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:border-white/45 hover:bg-white/15"
-            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
+            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
           >
             Feedback
           </a>
@@ -139,29 +133,19 @@ function Hero() {
         className="absolute inset-0 z-0 h-full w-full object-cover object-[center_35%] sm:object-center"
       />
 
-      {/* 2. Horizontal Scrim — lighter on narrow screens so it still reads as a fade without crushing the image */}
-      <div className="absolute inset-0 z-[1] bg-gradient-to-r from-black/40 via-black/12 to-transparent sm:from-black/50 sm:via-black/20" />
-
-      {/* 3. Bottom Fade — cream at bottom matches page bg (#FCFAF7) on all breakpoints so the hero blends into the section below; mobile strip is shorter */}
-      <div className="absolute inset-x-0 bottom-0 z-[5] h-32 bg-gradient-to-t from-[#FCFAF7] via-[#FCFAF7]/60 to-transparent sm:h-64" />
-
       {/* Mobile: vertically center copy in the hero band below the fixed header; desktop: unchanged layout */}
       <div className="relative z-10 mx-auto flex h-full min-h-0 max-w-7xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+4rem)] pb-4 sm:block sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
         <div className="flex min-h-0 flex-1 flex-col items-start justify-center text-left sm:block">
-          <h1
-            className="max-w-3xl text-2xl font-bold leading-tight tracking-[-0.03em] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl"
-            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
-          >
-            Discover the Best
-            <br className="hidden sm:block" /> of Carleton.
-          </h1>
+          <div className="w-full max-w-xl rounded-2xl bg-black/30 px-6 py-7 shadow-lg backdrop-blur-[1px] sm:max-w-3xl sm:px-10 sm:py-10 md:px-12 md:py-12">
+            <h1 className="text-2xl font-bold leading-tight tracking-[-0.01em] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-5xl">
+              Discover the Best
+              <br className="hidden sm:block" /> of Carleton.
+            </h1>
 
-          <p
-            className="mt-2 max-w-xl line-clamp-2 text-sm font-medium leading-snug text-white/95 sm:mt-6 sm:line-clamp-none sm:text-lg md:text-xl"
-            style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
-          >
-            From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
-          </p>
+            <p className="mt-3 max-w-xl line-clamp-2 text-sm font-medium leading-snug text-white/95 sm:mt-6 sm:line-clamp-none sm:text-lg md:text-xl">
+              From the tunnels to the quad, stay in the loop with every club event, party, and career fair happening across campus.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -169,8 +153,30 @@ function Hero() {
 }
 
 function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQuery, onSearchSubmit, showPills = true }) {
+  const pillsScrollRef = useRef(null);
+
+  useEffect(() => {
+    if (!showPills) return;
+    const el = pillsScrollRef.current;
+    if (!el) return;
+
+    function onWheel(e) {
+      if (el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+      const delta = e.deltaY;
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+
+      el.scrollLeft = Math.min(maxScroll, Math.max(0, el.scrollLeft + delta));
+      e.preventDefault();
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [showPills]);
+
   return (
-    <section id="events-anchor" className="relative z-20 mx-auto max-w-7xl -mt-6 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 lg:px-12">
+    <section id="events-anchor" className={`relative z-20 mx-auto max-w-7xl -mt-6 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 ${sideMargin}`}>
       {/* Search bar target backend SQL */}
       <form onSubmit={onSearchSubmit} className="relative group">
         <svg
@@ -194,7 +200,10 @@ function SearchAndPills({ pills, activePill, onPillClick, searchQuery, onSearchQ
 
       {/* Filter pills — hidden while searching so results are one clear list */}
       {showPills && (
-        <div className="scrollbar-hide touch-scroll-x mt-6 flex gap-3 overflow-x-auto pb-2">
+        <div
+          ref={pillsScrollRef}
+          className="scrollbar-hide touch-scroll-x mt-6 flex gap-3 overflow-x-auto pb-2"
+        >
           {pills.map((pill) => (
             <button
               key={pill}
@@ -241,13 +250,18 @@ function EventSection({ title, sectionId, events }) {
   const carouselId = `${sectionId}-carousel`;
   function scrollCarousel(direction) {
     const element = document.getElementById(carouselId);
-    if (!element) return;
-    const amount = Math.min(320, Math.max(200, element.clientWidth * 0.85));
+    if (!element || element.children.length === 0) return;
+    const first = element.children[0];
+    const style = getComputedStyle(element);
+    const gapRaw = style.gap || style.columnGap || '0';
+    const gap = Number.parseFloat(gapRaw) || 0;
+    const step = first.offsetWidth + gap;
+    const amount = 3 * step;
     element.scrollBy({ left: direction * amount, behavior: 'smooth' });
   }
 
   return (
-    <section id={sectionId} className="scroll-mt-24 px-4 py-5 sm:px-6 lg:px-12">
+    <section id={sectionId} className={`scroll-mt-24 px-4 py-5 sm:px-6 ${sideMargin}`}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="inline-flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <h2 className="font-sans text-2xl font-bold text-[#111827] sm:text-3xl">{title}</h2>
@@ -282,7 +296,7 @@ function EventSection({ title, sectionId, events }) {
       ) : (
         <div id={carouselId} className="scrollbar-hide touch-scroll-x flex gap-3 overflow-x-auto pb-2">
           {events.map((event, index) => (
-            <EventCard key={`${title}-${event.id || index}`} event={event} />
+            <EventCard key={`${title}-${event.id || index}`} event={event} layout="carousel" />
           ))}
         </div>
       )}
@@ -333,15 +347,16 @@ function HomePage() {
       try {
         const res = await fetch('/api/events');
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const normalized = data.map((event) => ({
             ...event,
             category: event.category || event.source_platform || 'Academic',
             tags: event.tags || [event.category || event.source_platform || 'Academic'],
           }));
-          setEvents(normalized);
+          const withoutDup = normalized.filter((e) => !isUiTestEventId(e.id));
+          setEvents([...getUiTestEvents(), ...withoutDup]);
         } else {
-          setEvents([]);
+          setEvents(getUiTestEvents());
         }
       } catch (error) {
         setEvents([]);
@@ -366,21 +381,18 @@ function HomePage() {
       (event.tags || []).forEach((tag) => tags.add(tag));
       if (event.category) tags.add(event.category);
     });
-
     return Array.from(tags).sort((a, b) => a.localeCompare(b));
   }, [events]);
 
   const pillLabels = useMemo(() => {
     const ordered = [];
     const seen = new Set();
-
     [...DEFAULT_TAG_PILLS, ...activeTags].forEach((tag) => {
       if (!seen.has(tag)) {
         ordered.push(tag);
         seen.add(tag);
       }
     });
-
     return ordered;
   }, [activeTags]);
 
@@ -388,15 +400,10 @@ function HomePage() {
     const today = startOfDay(new Date());
     const weekEnd = addDays(today, 7);
 
-    const sorted = [...events].sort((a, b) => {
+    const sorted = uniqueByEventId([...events]).sort((a, b) => {
       const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
       const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
       return aDate - bDate;
-    });
-
-    const todayEvents = sorted.filter((event) => {
-      const eventDate = parseEventDate(event?.date);
-      return eventDate ? isSameDay(eventDate, today) : false;
     });
 
     const weekEvents = sorted.filter((event) => {
@@ -408,11 +415,12 @@ function HomePage() {
     const tagSections = activeTags.map((tag) => ({
       title: tag,
       sectionId: slugifySection(tag),
-      events: sorted.filter((event) => event.category === tag || (event.tags || []).includes(tag)),
+      events: sorted.filter(
+        (event) => event.category === tag || (event.tags || []).includes(tag)
+      ),
     }));
 
     return [
-      { title: 'Today', sectionId: slugifySection('Today'), events: todayEvents },
       { title: 'This Week', sectionId: slugifySection('This Week'), events: weekEvents },
       ...tagSections,
     ];

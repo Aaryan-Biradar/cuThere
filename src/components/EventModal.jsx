@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getUiTestEventById, isUiTestEventId } from '@/lib/ui-test-event';
 
 function normalizeDateString(dateString) {
   if (!dateString) return '';
@@ -37,11 +38,22 @@ export default function EventModal({ eventId }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Fetch event from existing API route
+  // Fetch event from API, or use client-only UI test payload (no DB)
   useEffect(() => {
     if (!eventId) return;
     setLoading(true);
     setEvent(null);
+
+    if (isUiTestEventId(eventId)) {
+      const demo = getUiTestEventById(eventId);
+      if (demo) {
+        setEvent({ ...demo, is_demo: true });
+      } else {
+        setEvent(null);
+      }
+      setLoading(false);
+      return;
+    }
 
     fetch(`/api/events/${eventId}`)
       .then((r) => r.json())
