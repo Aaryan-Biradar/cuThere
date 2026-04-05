@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import EventCard from '@/components/EventCard';
+import { getUiTestEvents, isUiTestEventId } from '@/lib/ui-test-event';
 
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
@@ -63,18 +64,31 @@ function uniqueByEventId(items) {
 
 function BrandLogo({ variant = 'header', scrolled = false }) {
   const isHeader = variant === 'header';
+  
+  // Base classes for the pill shape
+  const baseClasses = "inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm";
+  
+  // Logic: 
+  // If it's the header, we want it white regardless of scroll.
+  // If scrolled, we add a subtle border so it doesn't disappear into the white header.
+  const headerStyles = scrolled 
+    ? 'bg-white border border-gray-200' 
+    : 'bg-white border border-transparent';
+
+  const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
+
+  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
+
   return (
     <a
       href="/"
-      className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium tracking-[0.18em] transition ${
-        isHeader
-          ? scrolled
-            ? 'border border-[#E5E7EB] bg-white text-black hover:border-[#D71920]/30'
-            : 'border border-white bg-white/10 text-white hover:bg-white/15'
-          : 'border border-[#E5E7EB] bg-white text-[#111827] shadow-[0_1px_4px_rgba(17,24,39,0.04)] hover:border-[#D71920]/30'
-      }`}
+      className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}
     >
-      cuThere
+      <img 
+        src="/logo.png" 
+        alt="cuThere" 
+        className={imgClass} 
+      />
     </a>
   );
 }
@@ -83,7 +97,7 @@ function Header({ scrolled }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'bg-[#FCFAF7] border-b border-[#FCFAF7] shadow-md' : 'bg-transparent'
+        scrolled ? 'bg-[#FCFAF7] border-b border-[#FCFAF7] shadow-md' : 'bg-transparent '
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
@@ -111,10 +125,14 @@ function Header({ scrolled }) {
 function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-8 sm:px-6 lg:px-12">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <BrandLogo variant="footer" />
-        <p className="font-sans text-xs text-[#6B7280]">© {year}</p>
+    <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-3 sm:px-6 lg:px-12">
+      <div className="mx-auto flex h-10 max-w-7xl items-center justify-between">
+        <div className="flex items-center">
+          <BrandLogo variant="footer" />
+        </div>
+        <p className="font-sans text-[10px] font-medium  tracking-widest text-[#9CA3AF]">
+          © {year} CU There
+        </p>
       </div>
     </footer>
   );
@@ -125,7 +143,7 @@ function Hero() {
     <section className="relative h-[33dvh] min-h-[200px] w-full overflow-hidden sm:min-h-[90dvh] sm:h-auto">
       {/* 1. Base Image — cover fills frame (no letterboxing); tweak object position if focal point shifts */}
       <img
-        src="/image.png"
+        src="/heroimage.png"
         alt="Carleton University campus"
         className="absolute inset-0 z-0 h-full w-full object-cover object-[center_35%] sm:object-center"
       />
@@ -253,7 +271,7 @@ function EventSection({ title, sectionId, events }) {
     const gapRaw = style.gap || style.columnGap || '0';
     const gap = Number.parseFloat(gapRaw) || 0;
     const step = first.offsetWidth + gap;
-    const amount = 3 * step;
+    const amount = 4 * step;
     element.scrollBy({ left: direction * amount, behavior: 'smooth' });
   }
 
@@ -347,12 +365,13 @@ function HomePage() {
             category: event.category || event.source_platform || 'Academic',
             tags: event.tags || [event.category || event.source_platform || 'Academic'],
           }));
-          setEvents(normalized);
+          const withoutDup = normalized.filter((e) => !isUiTestEventId(e.id));
+          setEvents([...getUiTestEvents(), ...withoutDup]);
         } else {
-          setEvents([]);
+          setEvents(getUiTestEvents());
         }
       } catch (error) {
-        setEvents([]);
+        setEvents(getUiTestEvents());
       } finally {
         setLoading(false);
       }
@@ -428,7 +447,7 @@ function HomePage() {
   const isSearchActive = activeSearchQuery.trim().length > 0;
 
   return (
-    <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(3rem,env(safe-area-inset-bottom))]">
+    <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <Header scrolled={scrolled} />
       <Hero />
       <SearchAndPills

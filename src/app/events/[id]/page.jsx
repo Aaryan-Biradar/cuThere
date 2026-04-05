@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { getUiTestEventById, isUiTestEventId } from '@/lib/ui-test-event';
 
 function normalizeDateString(dateString) {
   if (!dateString) return '';
@@ -18,18 +19,31 @@ function formatEventDateTime(date, time) {
 
 function BrandLogo({ variant = 'header', scrolled = false }) {
   const isHeader = variant === 'header';
+  
+  // Base classes for the pill shape
+  const baseClasses = "inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm";
+  
+  // Logic: 
+  // If it's the header, we want it white regardless of scroll.
+  // If scrolled, we add a subtle border so it doesn't disappear into the white header.
+  const headerStyles = scrolled 
+    ? 'bg-white border border-gray-200' 
+    : 'bg-white border border-transparent';
+
+  const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
+
+  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
+
   return (
     <a
       href="/"
-      className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium tracking-[0.18em] transition ${
-        isHeader
-          ? scrolled
-            ? 'border border-[#E5E7EB] bg-white text-black hover:border-[#D71920]/30'
-            : 'border border-white bg-white/10 text-white hover:bg-white/15'
-          : 'border border-[#E5E7EB] bg-white text-[#111827] shadow-[0_1px_4px_rgba(17,24,39,0.04)] hover:border-[#D71920]/30'
-      }`}
+      className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}
     >
-      cuThere
+      <img 
+        src="/logo.png" 
+        alt="cuThere" 
+        className={imgClass} 
+      />
     </a>
   );
 }
@@ -90,6 +104,15 @@ export default function EventDetailPage() {
     async function fetchEvent() {
       setLoading(true);
       setEvent(null);
+
+      if (isUiTestEventId(id)) {
+        const demo = getUiTestEventById(id);
+        if (!cancelled) {
+          setEvent(demo ? { ...demo, is_demo: true } : null);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const res = await fetch(`/api/events/${id}`);
@@ -154,7 +177,7 @@ export default function EventDetailPage() {
 
   const imageSrc = event.displayUrl
     ? `/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}`
-    : '/image.png';
+    : '/heroimage.png';
 
   return shell(
     <main className="flex flex-1 flex-col lg:min-h-0 lg:flex-row">
