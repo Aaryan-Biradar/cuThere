@@ -128,7 +128,6 @@ function Footer() {
     <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-3 sm:px-6 lg:px-12">
       <div className="mx-auto flex h-10 max-w-7xl items-center justify-between">
         <div className="flex items-center">
-          <BrandLogo variant="footer" />
         </div>
         <p className="font-sans text-[10px] font-medium  tracking-widest text-[#9CA3AF]">
           © {year} CU There
