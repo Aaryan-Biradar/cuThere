@@ -150,7 +150,7 @@ function Hero() {
       {/* Mobile: vertically center copy in the hero band below the fixed header; desktop: unchanged layout */}
       <div className="relative z-10 mx-auto flex h-full min-h-0 max-w-7xl flex-col px-4 pt-[calc(env(safe-area-inset-top)+4rem)] pb-4 sm:block sm:px-6 sm:pb-36 sm:pt-32 md:px-10 md:pb-48 md:pt-44">
         <div className="flex min-h-0 flex-1 flex-col items-start justify-center text-left sm:block">
-          <div className="w-full max-w-xl rounded-2xl bg-black/30 px-6 py-7 shadow-lg backdrop-blur-[1px] sm:max-w-2xl sm:px-10 sm:py-10 md:px-12 md:py-12">
+          <div className="w-full max-w-xl rounded-2xl bg-black/50 px-6 py-7 shadow-lg backdrop-blur-[1px] sm:max-w-2xl sm:px-10 sm:py-10 md:px-12 md:py-12">
             <h1 className="text-2xl font-bold leading-tight tracking-[-0.01em] text-white sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-5xl">
               Discover the Best
               <br className="hidden sm:block" /> of Carleton.
