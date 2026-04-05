@@ -105,12 +105,6 @@ function Header({ scrolled }) {
 
         <div className="ml-auto flex items-center gap-2">
           <a
-            href="/about"
-            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
-          >
-            About
-          </a>
-          <a
             href="/feedback"
             className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
           >
