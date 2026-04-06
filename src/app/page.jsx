@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import EventCard from '@/components/EventCard';
-import { getUiTestEvents, isUiTestEventId } from '@/lib/ui-test-event';
 
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
@@ -436,13 +435,12 @@ function HomePage() {
             category: event.category || event.source_platform || 'Academic',
             tags: event.tags || [event.category || event.source_platform || 'Academic'],
           }));
-          const withoutDup = normalized.filter((e) => !isUiTestEventId(e.id));
-          setEvents([...getUiTestEvents(), ...withoutDup]);
+          setEvents(normalized);
         } else {
-          setEvents(getUiTestEvents());
+          setEvents([]);
         }
       } catch (error) {
-        setEvents(getUiTestEvents());
+        setEvents([]);
       } finally {
         setLoading(false);
       }

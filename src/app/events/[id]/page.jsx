@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getUiTestEventById, isUiTestEventId } from '@/lib/ui-test-event';
 
 function normalizeDateString(dateString) {
   if (!dateString) return '';
@@ -113,15 +112,6 @@ export default function EventDetailPage() {
     async function fetchEvent() {
       setLoading(true);
       setEvent(null);
-
-      if (isUiTestEventId(id)) {
-        const demo = getUiTestEventById(id);
-        if (!cancelled) {
-          setEvent(demo ? { ...demo, is_demo: true } : null);
-          setLoading(false);
-        }
-        return;
-      }
 
       try {
         const res = await fetch(`/api/events/${id}`);
