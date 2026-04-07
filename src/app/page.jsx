@@ -25,83 +25,6 @@ function parseEventDate(dateString) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function getEventDateText(event) {
-  return event?.date || event?.event_date || '';
-}
-
-function getEventTimeText(event) {
-  return event?.time || '';
-}
-
-function normalizeEventForCard(event) {
-  return {
-    ...event,
-    date: getEventDateText(event),
-    time: getEventTimeText(event),
-  };
-}
-
-function parseTimeToMinutes(timeString) {
-  if (!timeString) return Number.POSITIVE_INFINITY;
-  const text = String(timeString).trim().toLowerCase();
-  if (!text) return Number.POSITIVE_INFINITY;
-
-  const match = text.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
-  if (!match) return Number.POSITIVE_INFINITY;
-
-  let hours = Number.parseInt(match[1], 10);
-  const minutes = Number.parseInt(match[2] || '0', 10);
-  const meridiem = match[3];
-
-  if (Number.isNaN(hours) || Number.isNaN(minutes) || minutes < 0 || minutes > 59) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  if (meridiem === 'pm' && hours < 12) hours += 12;
-  if (meridiem === 'am' && hours === 12) hours = 0;
-  if (hours < 0 || hours > 23) return Number.POSITIVE_INFINITY;
-
-  return hours * 60 + minutes;
-}
-
-function compareEventsByDateTimeAsc(a, b) {
-  const aDate = parseEventDate(getEventDateText(a));
-  const bDate = parseEventDate(getEventDateText(b));
-  const aTime = aDate?.getTime();
-  const bTime = bDate?.getTime();
-
-  if (aDate && bDate && aTime !== bTime) return aTime - bTime;
-  if (aDate && !bDate) return -1;
-  if (!aDate && bDate) return 1;
-
-  if (aDate && bDate) {
-    const aMinutes = parseTimeToMinutes(getEventTimeText(a));
-    const bMinutes = parseTimeToMinutes(getEventTimeText(b));
-    if (aMinutes !== bMinutes) return aMinutes - bMinutes;
-  }
-
-  return String(a?.title || '').localeCompare(String(b?.title || ''));
-}
-
-function compareEventsByDateTimeDesc(a, b) {
-  const aDate = parseEventDate(getEventDateText(a));
-  const bDate = parseEventDate(getEventDateText(b));
-  const aTime = aDate?.getTime();
-  const bTime = bDate?.getTime();
-
-  if (aDate && bDate && aTime !== bTime) return bTime - aTime;
-  if (aDate && !bDate) return -1;
-  if (!aDate && bDate) return 1;
-
-  if (aDate && bDate) {
-    const aMinutes = parseTimeToMinutes(getEventTimeText(a));
-    const bMinutes = parseTimeToMinutes(getEventTimeText(b));
-    if (aMinutes !== bMinutes) return bMinutes - aMinutes;
-  }
-
-  return String(a?.title || '').localeCompare(String(b?.title || ''));
-}
-
 function startOfDay(date) {
   const copy = new Date(date);
   copy.setHours(0, 0, 0, 0);
@@ -323,7 +246,7 @@ function SearchResultsSection({ query, events }) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {events.map((event, index) => (
-            <EventCard key={`search-${event.id || index}`} event={normalizeEventForCard(event)} layout="grid" />
+            <EventCard key={`search-${event.id || index}`} event={event} layout="grid" />
           ))}
         </div>
       )}
@@ -381,7 +304,7 @@ function EventSection({ title, sectionId, events }) {
       ) : (
         <div id={carouselId} className="scrollbar-hide touch-scroll-x flex gap-3 overflow-x-auto pb-2">
           {events.map((event, index) => (
-            <EventCard key={`${title}-${event.id || index}`} event={normalizeEventForCard(event)} layout="carousel" />
+            <EventCard key={`${title}-${event.id || index}`} event={event} layout="carousel" />
           ))}
         </div>
       )}
@@ -456,24 +379,14 @@ function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const upcomingEvents = useMemo(() => {
-    const today = startOfDay(new Date());
-    return uniqueByEventId([...events])
-      .sort(compareEventsByDateTimeAsc)
-      .filter((event) => {
-        const eventDate = parseEventDate(getEventDateText(event));
-        return !!eventDate && eventDate >= today;
-      });
-  }, [events]);
-
   const activeTags = useMemo(() => {
     const tags = new Set();
-    upcomingEvents.forEach((event) => {
+    events.forEach((event) => {
       (event.tags || []).forEach((tag) => tags.add(tag));
       if (event.category) tags.add(event.category);
     });
     return Array.from(tags).sort((a, b) => a.localeCompare(b));
-  }, [upcomingEvents]);
+  }, [events]);
 
   const pillLabels = useMemo(() => {
     const ordered = [];
@@ -487,17 +400,18 @@ function HomePage() {
     return ordered;
   }, [activeTags]);
 
-  const sortedSearchResults = useMemo(() => {
-    if (!Array.isArray(searchResults)) return [];
-    return uniqueByEventId([...searchResults]).sort(compareEventsByDateTimeDesc);
-  }, [searchResults]);
-
   const sections = useMemo(() => {
     const today = startOfDay(new Date());
     const weekEnd = addDays(today, 7);
 
-    const weekEvents = upcomingEvents.filter((event) => {
-      const eventDate = parseEventDate(getEventDateText(event));
+    const sorted = uniqueByEventId([...events]).sort((a,b) =>{
+      const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      return aDate - bDate;
+    });
+
+    const weekEvents = sorted.filter((event) => {
+      const eventDate = parseEventDate(event?.date);
       if (!eventDate) return false;
       return eventDate >= today && eventDate <= weekEnd;
     });
@@ -505,7 +419,7 @@ function HomePage() {
     const tagSections = activeTags.map((tag) => ({
       title: tag,
       sectionId: slugifySection(tag),
-      events: upcomingEvents.filter(
+      events: sorted.filter(
         (event) => event.category === tag || (event.tags || []).includes(tag)
       ),
     }));
@@ -514,7 +428,7 @@ function HomePage() {
       { title: 'This Week', sectionId: slugifySection('This Week'), events: weekEvents },
       ...tagSections,
     ];
-  }, [upcomingEvents, activeTags]);
+  }, [events, activeTags]);
 
   function handlePillClick(pill) {
     setActivePill(pill);
