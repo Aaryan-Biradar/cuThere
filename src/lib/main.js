@@ -1,3 +1,4 @@
+import { put } from '@vercel/blob';
 import { scrapeLatestPost } from './scraper.js';
 import { isEvent, analyzeFlyer } from './ai.js';
 import { insertEventToDatabase } from './eventInsert.js';
@@ -52,9 +53,14 @@ async function runPipeline() {
             continue;
         }
 
+        // STEP 2.5: Fetch the image ONCE — we'll reuse this buffer for AI + Blob upload
+        console.log("   📸 Fetching event flyer image...");
+        const imageResponse = await fetch(post.displayUrl);
+        const imageBuffer = await imageResponse.arrayBuffer();
+
         // STEP 3: Filter — ask Gemini if this is actually an event
         console.log("   🔍 Checking if post is an event...");
-        const eventCheck = await executeWithRetry(() => isEvent(post.displayUrl, post.caption));
+        const eventCheck = await executeWithRetry(() => isEvent(imageBuffer, post.caption));
 
         if (!eventCheck) {
             console.log(`   ⏭️  Not an event. Skipping.`);
@@ -64,17 +70,27 @@ async function runPipeline() {
 
         // STEP 4: Send the image + caption to Gemini for full analysis
         console.log("   🤖 Analyzing with Gemini AI...");
-        const eventData = await executeWithRetry(() => analyzeFlyer(post.displayUrl, post.caption));
+        const eventData = await executeWithRetry(() => analyzeFlyer(imageBuffer, post.caption));
         console.log("   Parsed event data:", eventData);
 
-        // STEP 5: Insert the structured data into Turso
+        // STEP 5: Upload the image buffer to Vercel Blob for permanent storage
+        console.log("   ☁️  Uploading flyer to Vercel Blob...");
+        const filename = `event-flyers/${Date.now()}-${postId}.jpg`;
+        const blob = await put(filename, imageBuffer, {
+            access: 'public',
+            token: process.env.BLOB_READ_WRITE_TOKEN
+        });
+        const permanentImageUrl = blob.url;
+        console.log(`   🔗 Permanent URL: ${permanentImageUrl}`);
+
+        // STEP 6: Insert the structured data into Turso (with the permanent Blob URL)
         console.log("   💾 Inserting into Database...");
         try {
             const insertResult = await insertEventToDatabase(eventData, postId, {
                 ownerUsername: post.ownerUsername,
                 ownerFullName: post.ownerFullName,
                 coauthorProducers: post.coauthorProducers,
-                displayUrl: post.displayUrl,
+                displayUrl: permanentImageUrl, // ← Permanent Vercel Blob URL instead of expiring Apify URL
                 caption: post.caption,
                 postUrl: post.url
             });

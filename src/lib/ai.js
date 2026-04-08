@@ -16,9 +16,8 @@ const masterTags = [
 ];
 
 // Quick filter: asks Gemini if a post is actually an event or not
-export async function isEvent(imageUrl, caption) {
-    const imageResponse = await fetch(imageUrl); //
-    const imageBuffer = await imageResponse.arrayBuffer();
+// Now accepts a raw ArrayBuffer instead of fetching from a URL
+export async function isEvent(imageBuffer, caption) {
     const base64Image = Buffer.from(imageBuffer).toString("base64");
 
     const response = await ai.models.generateContent({
@@ -34,7 +33,8 @@ export async function isEvent(imageUrl, caption) {
     return answer === 'yes';
 }
 
-export async function analyzeFlyer(imageUrl, caption) {
+// Now accepts a raw ArrayBuffer instead of fetching from a URL
+export async function analyzeFlyer(imageBuffer, caption) {
     // 1. We tell the AI exactly what we want in the prompt
     const prompt = `
         Look at this event flyer and the provided caption. Extract the event details and return ONLY a valid JSON object.
@@ -96,12 +96,8 @@ export async function analyzeFlyer(imageUrl, caption) {
         }
     `;
 
-    // 2. Fetch the image and convert it to base64 inline data for Gemini
-    const imageResponse = await fetch(imageUrl);
-    const imageBuffer = await imageResponse.arrayBuffer();
+    // 2. Convert the pre-fetched buffer to base64 for Gemini
     const base64Image = Buffer.from(imageBuffer).toString("base64");
-
-
 
     // 3. We send the prompt, the caption, and the image part to Gemini
     const response = await ai.models.generateContent({
