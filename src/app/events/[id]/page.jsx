@@ -182,9 +182,7 @@ export default function EventDetailPage() {
     );
   }
 
-  const imageSrc = event.displayUrl
-    ? `/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}`
-    : '/heroimage.png';
+  const imageSrc = event.displayUrl || '/heroimage.png';
 
   const eventButtons = (
     <>

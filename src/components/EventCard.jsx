@@ -64,7 +64,7 @@ export default function EventCard({ event, layout = 'carousel' }) {
       <div className="relative aspect-square w-full bg-[#0A0A0A] overflow-hidden border-b border-[#E5E7EB]">
         {event?.displayUrl && (
           <img
-            src={`/api/image-proxy?url=${encodeURIComponent(event.displayUrl)}`}
+            src={event.displayUrl}
             alt={event?.title || 'Event'}
             className="absolute inset-0 z-10 h-full w-full object-cover object-center"
           />
