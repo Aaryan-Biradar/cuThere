@@ -17,12 +17,24 @@ function parseEventDate(dateString) {
   const candidate = normalizeDateString(dateString);
   if (!candidate) return null;
 
-  let date = new Date(candidate);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // 1. Create a date object using the current year
+  let date = new Date(`${candidate}, ${currentYear}`);
+
   if (Number.isNaN(date.getTime())) {
-    // Try with current year for partial date strings (e.g. "March 18")
-    date = new Date(`${candidate} ${new Date().getFullYear()}`);
+    return null;
   }
-  return Number.isNaN(date.getTime()) ? null : date;
+
+  // 2. Pivot Logic: If the month is June (5) or later, 
+  // set the year to the previous year.
+  const eventMonth = date.getMonth(); 
+  if (eventMonth > 4) { // 4 = May, so 5+ is June and beyond
+    date.setFullYear(currentYear - 1);
+  }
+
+  return date;
 }
 
 function startOfDay(date) {
@@ -403,27 +415,40 @@ function HomePage() {
   const sections = useMemo(() => {
     const today = startOfDay(new Date());
     const weekEnd = addDays(today, 7);
-
-    const sorted = uniqueByEventId([...events]).sort((a,b) =>{
+  
+    // 1. Deduplicate and Sort as you already do
+    const sorted = uniqueByEventId([...events]).sort((a, b) => {
       const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
       const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
       return aDate - bDate;
     });
-
-    const weekEvents = sorted.filter((event) => {
+  
+    // 2. NEW: Filter out past events globally
+    // This ensures that neither "This Week" nor any "Category" section shows old data.
+    const futureEvents = sorted.filter((event) => {
       const eventDate = parseEventDate(event?.date);
       if (!eventDate) return false;
-      return eventDate >= today && eventDate <= weekEnd;
+  
+      // Compare using .getTime() to ensure we are comparing numerical timestamps
+      // This removes the "past" events effectively
+      return eventDate.getTime() >= today.getTime();
     });
-
+  
+    // 3. Filter "This Week" from the already-filtered future list
+    const weekEvents = futureEvents.filter((event) => {
+      const eventDate = parseEventDate(event?.date);
+      return eventDate <= weekEnd;
+    });
+  
+    // 4. Create tag sections using the filtered future list
     const tagSections = activeTags.map((tag) => ({
       title: tag,
       sectionId: slugifySection(tag),
-      events: sorted.filter(
+      events: futureEvents.filter(
         (event) => event.category === tag || (event.tags || []).includes(tag)
       ),
     }));
-
+  
     return [
       { title: 'This Week', sectionId: slugifySection('This Week'), events: weekEvents },
       ...tagSections,
@@ -460,7 +485,7 @@ function HomePage() {
             <span className="ml-3 font-medium text-slate-600">Searching database...</span>
         </section>
       ) : isSearchActive ? (
-        <SearchResultsSection query={activeSearchQuery} events={sortedSearchResults} />
+        <SearchResultsSection query={activeSearchQuery} events={searchResults} />
       ) : (
         <section id="events" className="mx-auto max-w-7xl pb-10">
           {sections.map((section) => (
