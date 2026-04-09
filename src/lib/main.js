@@ -1,7 +1,7 @@
 import { put } from '@vercel/blob';
 import { scrapeLatestPost } from './scraper.js';
 import { isEvent, analyzeFlyer } from './ai.js';
-import { insertEventToDatabase } from './eventInsert.js';
+import { insertEventToDatabase, normalizeEventDate } from './eventInsert.js';
 import db from './db.js';
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -72,6 +72,13 @@ async function runPipeline() {
         console.log("   🤖 Analyzing with Gemini AI...");
         const eventData = await executeWithRetry(() => analyzeFlyer(imageBuffer, post.caption));
         console.log("   Parsed event data:", eventData);
+
+        // STEP 4.5: Normalize the event date into a sortable YYYY-MM-DD format
+        if (eventData.date) {
+            const normalizedDate = normalizeEventDate(post.timestamp, eventData.date);
+            console.log(`   📅 Normalized date: "${eventData.date}" → "${normalizedDate}"`);
+            eventData.date = normalizedDate;
+        }
 
         // STEP 5: Upload the image buffer to Vercel Blob for permanent storage
         console.log("   ☁️  Uploading flyer to Vercel Blob...");

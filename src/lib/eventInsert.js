@@ -1,5 +1,46 @@
 import db from './db.js';
 
+/**
+ * Calculates the correct year for an event based on the post's timestamp.
+ * @param {string} postTimestamp - The ISO string from Apify (e.g., "2026-12-10T13:37:24.000Z")
+ * @param {string} eventDateString - The string from Gemini (e.g., "January 15" or "Jan 15th")
+ * @returns {string} - A fully qualified date string (e.g., "2027-01-15")
+ */
+export function normalizeEventDate(postTimestamp, eventDateString) {
+    // 1. Parse the Apify Post Date
+    const postDate = new Date(postTimestamp);
+    const postYear = postDate.getFullYear();
+    const postMonth = postDate.getMonth(); // 0-indexed (0 = Jan, 11 = Dec)
+
+    // 2. Parse the Gemini Event Date
+    // We append a dummy year just so JavaScript's Date engine can parse the month word
+    const parsedEventDate = new Date(`${eventDateString}, 2000`);
+
+    // Check if JS failed to parse the weird string Gemini gave us
+    if (isNaN(parsedEventDate)) {
+        console.warn(`⚠️ Could not parse event date string: ${eventDateString}`);
+        return eventDateString; // Return the raw string as a fallback
+    }
+
+    const eventMonth = parsedEventDate.getMonth();
+    const eventDay = parsedEventDate.getDate();
+
+    // 3. Apply the Golden Rule
+    let finalYear = postYear;
+    if (eventMonth < postMonth) {
+        // The event month is earlier in the calendar than the post month.
+        // It must be for next year!
+        finalYear = postYear + 1;
+    }
+
+    // 4. Format it nicely for the Database (YYYY-MM-DD)
+    // We add 1 to the month because JS months are 0-indexed, and pad it with a zero if needed
+    const formattedMonth = String(eventMonth + 1).padStart(2, '0');
+    const formattedDay = String(eventDay).padStart(2, '0');
+
+    return `${finalYear}-${formattedMonth}-${formattedDay}`;
+}
+
 // The function now takes the dynamic AI data, the original post ID, and scraper metadata as parameters
 export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption, postUrl }) {
 

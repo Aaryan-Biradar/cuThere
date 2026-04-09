@@ -29,7 +29,7 @@ const client = new ApifyClient({
 // Prepare Actor input
 const input = {
     "dataDetailLevel": "basicData",
-    "resultsLimit": 3,
+    "resultsLimit": 1,
     "skipPinnedPosts": true,
     "username": [
         "https://www.instagram.com/carletoncss",

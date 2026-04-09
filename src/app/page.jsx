@@ -6,34 +6,51 @@ import EventCard from '@/components/EventCard';
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
 
-function normalizeDateString(dateString) {
+/**
+ * Converts a YYYY-MM-DD date string (from the database) into a
+ * human-friendly display string like "January 15".
+ * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
+ */
+function formatDisplayDate(dateString) {
   if (!dateString) return '';
   const trimmed = String(dateString).trim();
-  // convert "March 18th" to "March 18"
+
+  // Detect YYYY-MM-DD format from the database
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    // Build a Date in local time (noon avoids timezone edge cases)
+    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
+
+  // Fallback: strip ordinal suffixes ("15th" → "15") for legacy strings
   return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
 }
 
 function parseEventDate(dateString) {
-  const candidate = normalizeDateString(dateString);
-  if (!candidate) return null;
+  if (!dateString) return null;
+  const trimmed = String(dateString).trim();
 
+  // Handle YYYY-MM-DD from the database
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  // Legacy fallback for plain text dates
+  const cleaned = trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
   const now = new Date();
   const currentYear = now.getFullYear();
+  let date = new Date(`${cleaned}, ${currentYear}`);
+  if (Number.isNaN(date.getTime())) return null;
 
-  // 1. Create a date object using the current year
-  let date = new Date(`${candidate}, ${currentYear}`);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  // 2. Pivot Logic: If the month is June (5) or later, 
-  // set the year to the previous year.
-  const eventMonth = date.getMonth(); 
-  if (eventMonth > 4) { // 4 = May, so 5+ is June and beyond
+  // Pivot Logic for legacy strings
+  const eventMonth = date.getMonth();
+  if (eventMonth > 4) {
     date.setFullYear(currentYear - 1);
   }
-
   return date;
 }
 
@@ -50,9 +67,9 @@ function addDays(date, amount) {
 }
 
 function formatEventDateTime(eventDate, eventTime) {
-  const normalized = normalizeDateString(eventDate || '');
-  if (!normalized && !eventTime) return 'Date and time TBA';
-  const dateLabel = normalized || 'Date TBA';
+  const displayDate = formatDisplayDate(eventDate || '');
+  if (!displayDate && !eventTime) return 'Date and time TBA';
+  const dateLabel = displayDate || 'Date TBA';
   return eventTime ? `${dateLabel} • ${eventTime}` : dateLabel;
 }
 
