@@ -157,6 +157,8 @@ function Footer({ className = '' }) {
   );
 }
 
+const DEFAULT_DOCUMENT_TITLE = 'cuThere — Discover Local Events';
+
 export default function EventDetailPage() {
   const params = useParams();
   const idValue = params?.id;
@@ -192,6 +194,18 @@ export default function EventDetailPage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!event || event.error) {
+      document.title = DEFAULT_DOCUMENT_TITLE;
+      return undefined;
+    }
+    const label = event.title?.trim() || 'Untitled Event';
+    document.title = `${label} — cuThere`;
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE;
+    };
+  }, [event]);
 
   const shell = (children, { hideFooterOnMobile } = {}) => (
     <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
