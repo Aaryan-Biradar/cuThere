@@ -138,7 +138,7 @@ export default function EventDetailPage() {
       return undefined;
     }
     const label = event.title?.trim() || 'Untitled Event';
-    document.title = `${label} — cuThere`;
+    document.title = `${label} — CUThere`;
     return () => {
       document.title = DEFAULT_DOCUMENT_TITLE;
     };

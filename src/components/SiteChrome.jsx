@@ -54,7 +54,7 @@ export function SiteFooter({ className = '' }) {
       <div className="mx-auto flex h-10 max-w-7xl items-center justify-between">
         <div className="flex items-center" />
         <p className="font-sans text-[10px] font-medium tracking-widest text-[#9CA3AF]">
-          © {year} CU There
+          © {year} CUThere
         </p>
       </div>
     </footer>
