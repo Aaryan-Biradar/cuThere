@@ -14,7 +14,8 @@ async function buildDatabase() {
         `DROP TABLE IF EXISTS CATEGORY;`,
         `DROP TABLE IF EXISTS EVENT;`,
         `DROP TABLE IF EXISTS ORGANIZATION;`,
-        `DROP TABLE IF EXISTS STUDENT;`
+        `DROP TABLE IF EXISTS STUDENT;`,
+        `DROP TABLE IF EXISTS IGNORED_POST;`
     ];
 
     for (const statement of dropTables) {
@@ -77,6 +78,9 @@ async function buildDatabase() {
             PRIMARY KEY (student_id, category_id),
             FOREIGN KEY (student_id) REFERENCES STUDENT(student_id),
             FOREIGN KEY (category_id) REFERENCES CATEGORY(category_id)
+        );`,
+        `CREATE TABLE IGNORED_POST (
+            post_id TEXT PRIMARY KEY
         );`
     ];
 

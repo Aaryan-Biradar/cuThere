@@ -46,10 +46,21 @@ async function runPipeline() {
             sql: `SELECT event_id FROM EVENT WHERE event_id = ?`,
             args: [postId]
         });
-        const existing = result.rows[0];
+        const existingEvent = result.rows[0];
 
-        if (existing) {
-            console.log(`   ⏭️  Already in database. Skipping.`);
+        if (existingEvent) {
+            console.log(`   ⏭️  Already in events database. Skipping.`);
+            continue;
+        }
+
+        const ignoredResult = await db.execute({
+            sql: `SELECT post_id FROM IGNORED_POST WHERE post_id = ?`,
+            args: [postId]
+        });
+        const existingIgnored = ignoredResult.rows[0];
+
+        if (existingIgnored) {
+            console.log(`   ⏭️  Previously marked as NON-EVENT. Skipping.`);
             continue;
         }
 
@@ -63,7 +74,11 @@ async function runPipeline() {
         const eventCheck = await executeWithRetry(() => isEvent(imageBuffer, post.caption));
 
         if (!eventCheck) {
-            console.log(`   ⏭️  Not an event. Skipping.`);
+            console.log(`   ⏭️  Not an event. Saving ID to ignore list to save AI tokens on next run.`);
+            await db.execute({
+                sql: `INSERT INTO IGNORED_POST (post_id) VALUES (?)`,
+                args: [postId]
+            });
             continue;
         }
         console.log("   ✅ Confirmed as an event!");
