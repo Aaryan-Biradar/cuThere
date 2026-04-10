@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import EventCard from '@/components/EventCard';
+import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
@@ -52,75 +53,6 @@ function uniqueByEventId(items) {
     seen.add(key);
     return true;
   });
-}
-
-function BrandLogo({ variant = 'header', scrolled = false }) {
-  const isHeader = variant === 'header';
-  
-  // Base classes for the pill shape
-  const baseClasses = "inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm";
-  
-  // Logic: 
-  // If it's the header, we want it white regardless of scroll.
-  // If scrolled, we add a subtle border so it doesn't disappear into the white header.
-  const headerStyles = scrolled 
-    ? 'bg-white border border-gray-200' 
-    : 'bg-white border border-transparent';
-
-  const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
-
-  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
-
-  return (
-    <a
-      href="/"
-      className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}
-    >
-      <img 
-        src="/logo.png" 
-        alt="cuThere" 
-        className={imgClass} 
-      />
-    </a>
-  );
-}
-
-function Header({ scrolled }) {
-  return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'bg-[#FCFAF7] border-b border-[#FCFAF7] shadow-md' : 'bg-transparent '
-      }`}
-    >
-      <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" scrolled={scrolled} />
-
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href="/feedback"
-            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
-          >
-            Feedback
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Footer() {
-  const year = new Date().getFullYear();
-  return (
-    <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-3 sm:px-6 lg:px-12">
-      <div className="mx-auto flex h-10 max-w-7xl items-center justify-between">
-        <div className="flex items-center">
-        </div>
-        <p className="font-sans text-[10px] font-medium  tracking-widest text-[#9CA3AF]">
-          © {year} CU There
-        </p>
-      </div>
-    </footer>
-  );
 }
 
 function Hero() {
@@ -446,7 +378,7 @@ function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-      <Header scrolled={scrolled} />
+      <SiteHeader scrolled={scrolled} />
       <Hero />
       <SearchAndPills
         pills={pillLabels}
@@ -480,7 +412,7 @@ function HomePage() {
         </section>
       )}
 
-      <Footer />
+      <SiteFooter />
     </main>
   );
 }

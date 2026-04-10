@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,
@@ -93,71 +94,6 @@ function BackChevronIcon({ className = 'h-4 w-4' }) {
   );
 }
 
-function BrandLogo({ variant = 'header', scrolled = false }) {
-  const isHeader = variant === 'header';
-
-  // Base classes for the pill shape
-  const baseClasses = "inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm";
-
-  // Logic: 
-  // If it's the header, we want it white regardless of scroll.
-  // If scrolled, we add a subtle border so it doesn't disappear into the white header.
-  const headerStyles = scrolled
-    ? 'bg-white border border-gray-200'
-    : 'bg-white border border-transparent';
-
-  const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
-
-  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
-
-  return (
-    <a
-      href="/"
-      className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}
-    >
-      <img
-        src="/logo.png"
-        alt="cuThere"
-        className={imgClass}
-      />
-    </a>
-  );
-}
-
-function Header({ scrolled }) {
-  return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${scrolled ? 'border-b border-[#FCFAF7] bg-[#FCFAF7] shadow-md' : 'bg-transparent'
-        }`}
-    >
-      <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" scrolled={scrolled} />
-
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href="/feedback"
-            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:border-[#b81419] hover:bg-[#b81419]"
-          >
-            Feedback
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Footer({ className = '' }) {
-  const year = new Date().getFullYear();
-  return (
-    <footer className={`border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-8 sm:px-6 lg:px-12 ${className}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <BrandLogo variant="footer" />
-        <p className="font-sans text-xs text-[#6B7280]">© {year}</p>
-      </div>
-    </footer>
-  );
-}
-
 const DEFAULT_DOCUMENT_TITLE = 'cuThere — Discover Local Events';
 
 export default function EventDetailPage() {
@@ -211,11 +147,11 @@ export default function EventDetailPage() {
   const shell = (children, { hideFooterOnMobile } = {}) => (
     <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
       {/* No hero on this route — keep header in solid “scrolled” style for contrast */}
-      <Header scrolled />
+      <SiteHeader scrolled />
       <div className="flex min-h-0 flex-1 flex-col pt-[calc(env(safe-area-inset-top)+3.5rem)] sm:pt-[calc(env(safe-area-inset-top)+4rem)]">
         {children}
       </div>
-      <Footer className={hideFooterOnMobile ? 'hidden lg:block' : ''} />
+      <SiteFooter className={hideFooterOnMobile ? 'hidden lg:block' : ''} />
     </div>
   );
 
