@@ -9,22 +9,8 @@ const apifyKeys = [
     process.env.APIFY_API_TOKEN_4
 ].filter(Boolean); // This ensures it doesn't crash if you temporarily only have 2 keys
 
-// 2. Grab the GitHub run number. If you run this locally on your laptop, it defaults to 0.
-const runNumber = parseInt(process.env.RUN_NUMBER || "0", 10);
-
-// 3. Modulo Math! 
-// If runNumber is 4: 4 % 3 = 1 (Uses Key #2)
-// If runNumber is 5: 5 % 3 = 2 (Uses Key #3)
-// If runNumber is 6: 6 % 3 = 0 (Loops back to Key #1)
-const keyIndex = runNumber % apifyKeys.length;
-const selectedApifyToken = apifyKeys[keyIndex];
-
-console.log(`🔄 Key Rotation Active: Using Apify Key #${keyIndex + 1} for this run.`);
-
-// 4. Initialize Apify with the winning key
-const client = new ApifyClient({
-    token: selectedApifyToken
-});
+// We'll initialize the client and handle the runNumber logic dynamically inside scrapeLatestPost
+// so we can loop over the keys if one of them fails.
 
 // Prepare Actor input
 const input = {
@@ -160,19 +146,45 @@ const input = {
 };
 
 export async function scrapeLatestPost() {
-    // IG Post Scrapper Actor ID
     const actorId = "nH2AHrwxeTRJoN5hX";
+    
+    // Grab the GitHub run number, defaults to 0
+    const runNumber = parseInt(process.env.RUN_NUMBER || "0", 10);
+    const startIndex = runNumber % apifyKeys.length;
 
-    // Run the Actor and wait for it to finish
-    const run = await client.actor(actorId).call(input);
+    for (let i = 0; i < apifyKeys.length; i++) {
+        const currentIndex = (startIndex + i) % apifyKeys.length;
+        const selectedToken = apifyKeys[currentIndex];
+        
+        console.log(`🔄 Attempt ${i + 1}/${apifyKeys.length}: Using Apify Key #${currentIndex + 1} for this run...`);
+        
+        const client = new ApifyClient({
+            token: selectedToken
+        });
 
-    // Fetch Actor results from the run's dataset
-    const { items } = await client.dataset(run.defaultDatasetId).listItems();
+        try {
+            // Run the Actor and wait for it to finish
+            const run = await client.actor(actorId).call(input);
 
-    // items.forEach((item) => {
-    //     console.dir(item);
-    // });
+            // Fetch Actor results from the run's dataset
+            const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    console.log(`🕷️  Scraper found ${items.length} post(s)`);
-    return items;
+            console.log(`🕷️  Scraper found ${items.length} post(s)`);
+            return items;
+
+        } catch (error) {
+            // If the key has exceeded its monthly limit
+            if (error.statusCode === 403 && error.type === 'platform-feature-disabled') {
+                console.warn(`⚠️ Apify Key #${currentIndex + 1} has exceeded its monthly limit. Rotating to next key...`);
+                continue; // Move to the next key in the loop
+            }
+            
+            // If it's some other error, throw it immediately
+            console.error(`❌ Unexpected Apify Error with Key #${currentIndex + 1}:`, error.message);
+            throw error;
+        }
+    }
+
+    // If we've exhausted all keys
+    throw new Error("❌ Fatal: All available Apify keys have exhausted their monthly limits or failed.");
 }
