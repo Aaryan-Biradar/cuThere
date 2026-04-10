@@ -3,27 +3,13 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import EventCard from '@/components/EventCard';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import { parseEventDate } from '@/lib/eventDateUtils';
 
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
 
-function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const trimmed = String(dateString).trim();
-
-  // YYYY-MM-DD from the database — year is authoritative
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    return new Date(Number(year), Number(month) - 1, Number(day));
-  }
-
-  // Legacy text without a year: assume current calendar year (same as EventCard)
-  const cleaned = trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-  const currentYear = new Date().getFullYear();
-  const date = new Date(`${cleaned}, ${currentYear}`);
-  if (Number.isNaN(date.getTime())) return null;
-  return date;
+function eventDateField(event) {
+  return event?.date ?? event?.event_date;
 }
 
 function startOfDay(date) {
@@ -331,25 +317,19 @@ function HomePage() {
   
     // 1. Deduplicate and Sort as you already do
     const sorted = uniqueByEventId([...events]).sort((a, b) => {
-      const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
-      const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      const aDate = parseEventDate(eventDateField(a))?.getTime() || Number.POSITIVE_INFINITY;
+      const bDate = parseEventDate(eventDateField(b))?.getTime() || Number.POSITIVE_INFINITY;
       return aDate - bDate;
     });
-  
-    // 2. NEW: Filter out past events globally
-    // This ensures that neither "This Week" nor any "Category" section shows old data.
+
     const futureEvents = sorted.filter((event) => {
-      const eventDate = parseEventDate(event?.date);
+      const eventDate = parseEventDate(eventDateField(event));
       if (!eventDate) return false;
-  
-      // Compare using .getTime() to ensure we are comparing numerical timestamps
-      // This removes the "past" events effectively
       return eventDate.getTime() >= today.getTime();
     });
-  
-    // 3. Filter "This Week" from the already-filtered future list
+
     const weekEvents = futureEvents.filter((event) => {
-      const eventDate = parseEventDate(event?.date);
+      const eventDate = parseEventDate(eventDateField(event));
       return eventDate <= weekEnd;
     });
   

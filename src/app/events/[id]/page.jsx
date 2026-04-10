@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import { formatEventDateTime } from '@/lib/eventDateUtils';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,
@@ -13,38 +14,10 @@ const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
       disabled
       className="flex w-full shrink-0 cursor-wait items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-bold text-[#111827] shadow-sm sm:py-3 box-border"
     >
-      Add to calendar
+      
     </button>
   ),
 });
-
-/**
- * Converts a YYYY-MM-DD date string (from the database) into a
- * human-friendly display string like "January 15".
- * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
- */
-function formatDisplayDate(dateString) {
-  if (!dateString) return '';
-  const trimmed = String(dateString).trim();
-
-  // Detect YYYY-MM-DD format from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  }
-
-  // Fallback: strip ordinal suffixes for legacy strings
-  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-}
-
-function formatEventDateTime(date, time) {
-  const displayDate = formatDisplayDate(date || '');
-  if (!displayDate && !time) return 'Date and time TBA';
-  const dateLabel = displayDate || 'Date TBA';
-  return time ? `${dateLabel} • ${time}` : dateLabel;
-}
 
 /**
  * Converts a 12-hour time string (e.g. "6:00 PM", "11:30 AM") to
