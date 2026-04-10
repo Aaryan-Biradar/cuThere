@@ -6,51 +6,22 @@ import EventCard from '@/components/EventCard';
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
 
-/**
- * Converts a YYYY-MM-DD date string (from the database) into a
- * human-friendly display string like "January 15".
- * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
- */
-function formatDisplayDate(dateString) {
-  if (!dateString) return '';
-  const trimmed = String(dateString).trim();
-
-  // Detect YYYY-MM-DD format from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    // Build a Date in local time (noon avoids timezone edge cases)
-    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  }
-
-  // Fallback: strip ordinal suffixes ("15th" → "15") for legacy strings
-  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-}
-
 function parseEventDate(dateString) {
   if (!dateString) return null;
   const trimmed = String(dateString).trim();
 
-  // Handle YYYY-MM-DD from the database
+  // YYYY-MM-DD from the database — year is authoritative
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoMatch) {
     const [, year, month, day] = isoMatch;
     return new Date(Number(year), Number(month) - 1, Number(day));
   }
 
-  // Legacy fallback for plain text dates
+  // Legacy text without a year: assume current calendar year (same as EventCard)
   const cleaned = trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  let date = new Date(`${cleaned}, ${currentYear}`);
+  const currentYear = new Date().getFullYear();
+  const date = new Date(`${cleaned}, ${currentYear}`);
   if (Number.isNaN(date.getTime())) return null;
-
-  // Pivot Logic for legacy strings
-  const eventMonth = date.getMonth();
-  if (eventMonth > 4) {
-    date.setFullYear(currentYear - 1);
-  }
   return date;
 }
 
@@ -64,13 +35,6 @@ function addDays(date, amount) {
   const copy = new Date(date);
   copy.setDate(copy.getDate() + amount);
   return copy;
-}
-
-function formatEventDateTime(eventDate, eventTime) {
-  const displayDate = formatDisplayDate(eventDate || '');
-  if (!displayDate && !eventTime) return 'Date and time TBA';
-  const dateLabel = displayDate || 'Date TBA';
-  return eventTime ? `${dateLabel} • ${eventTime}` : dateLabel;
 }
 
 function slugifySection(title) {

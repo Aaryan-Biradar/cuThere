@@ -2,28 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 
-/**
- * Converts a YYYY-MM-DD date string (from the database) into a
- * human-friendly display string like "January 15".
- * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
- */
-function formatDisplayDate(dateString) {
-  if (!dateString) return '';
-  const trimmed = String(dateString).trim();
-
-  // Detect YYYY-MM-DD format from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    // Build a Date in local time (noon avoids timezone edge cases)
-    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  }
-
-  // Fallback: strip ordinal suffixes ("15th" → "15") for legacy strings
-  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-}
-
 function parseEventDate(dateString) {
   if (!dateString) return null;
   const trimmed = String(dateString).trim();
@@ -35,13 +13,44 @@ function parseEventDate(dateString) {
     return new Date(Number(year), Number(month) - 1, Number(day));
   }
 
-  // Legacy fallback for plain text dates
+  // Legacy: never use `new Date(cleaned)` alone — month/day strings often parse as year 2001 in V8.
   const cleaned = trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-  let date = new Date(cleaned);
-  if (Number.isNaN(date.getTime())) {
-    date = new Date(`${cleaned} ${new Date().getFullYear()}`);
+  const currentYear = new Date().getFullYear();
+  const date = new Date(`${cleaned}, ${currentYear}`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+/**
+ * Human-friendly date for the card. Omits the year when it matches the
+ * current calendar year; includes it for past/future years (e.g. 2025, 2027).
+ */
+function formatDisplayDate(dateString) {
+  if (!dateString) return '';
+  const trimmed = String(dateString).trim();
+  const currentYear = new Date().getFullYear();
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const [, yearStr, month, day] = isoMatch;
+    const y = Number(yearStr);
+    const date = new Date(y, Number(month) - 1, Number(day), 12);
+    if (y !== currentYear) {
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   }
-  return Number.isNaN(date.getTime()) ? null : date;
+
+  const parsed = parseEventDate(trimmed);
+  if (parsed) {
+    const y = parsed.getFullYear();
+    if (y !== currentYear) {
+      return parsed.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    return parsed.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
+
+  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
 }
 
 function isTodayEvent(dateString) {
