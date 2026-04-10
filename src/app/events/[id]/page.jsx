@@ -9,7 +9,8 @@ const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   loading: () => (
     <button
       type="button"
-      className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-[#D71920] bg-[#D71920] py-2.5 text-sm font-bold text-white shadow-sm sm:py-3"
+      disabled
+      className="flex w-full shrink-0 cursor-wait items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-bold text-[#111827] shadow-sm sm:py-3 box-border"
     >
       Add to calendar
     </button>
