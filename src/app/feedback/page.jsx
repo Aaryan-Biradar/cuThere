@@ -170,7 +170,7 @@ export default function FeedbackPage() {
             >
               <p className="font-sans text-lg font-bold text-[#111827]">Thanks for reaching out! 🎉</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Your feedback has been sent to the team. We appreciate you helping us improve cuThere.
+                Your feedback has been sent to the team. We appreciate you helping us improve CUThere.
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <a

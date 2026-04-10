@@ -5,6 +5,7 @@ export const metadata = {
     description: 'Browse and RSVP to campus events instantly.',
     manifest: '/manifest.json',
     icons: {
+        icon: '/tabimage.png',
         apple: '/icons/icon-192x192.png',
     },
 };
