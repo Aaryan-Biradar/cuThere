@@ -1,14 +1,12 @@
 'use client';
 
-function BrandLogo({ variant = 'header', scrolled = false }) {
+function BrandLogo({ variant = 'header' }) {
   const isHeader = variant === 'header';
 
   const baseClasses =
-    'inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm';
+    'inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300';
 
-  const headerStyles = scrolled
-    ? 'bg-white border border-gray-200'
-    : 'bg-white border border-transparent';
+  const headerStyles = 'bg-white';
 
   const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
 
@@ -21,15 +19,17 @@ function BrandLogo({ variant = 'header', scrolled = false }) {
   );
 }
 
-export function SiteHeader({ scrolled }) {
+export function SiteHeader({ scrolled = false }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'bg-[#FCFAF7] border-b border-[#FCFAF7] shadow-md' : 'bg-transparent '
+        scrolled
+          ? 'border-b border-gray-100 bg-white shadow-md'
+          : 'bg-transparent'
       }`}
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" scrolled={scrolled} />
+        <BrandLogo variant="header" />
 
         <div className="ml-auto flex items-center gap-2">
           <a
