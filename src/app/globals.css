@@ -54,3 +54,42 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Custom AddToCalendarButton styling to match the Instagram button */
+add-to-calendar-button::part(atcb-button) {
+  display: flex !important;
+  width: 135% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important; /* gap-2 */
+  border-radius: 0.75rem !important; /* rounded-xl */
+  border: 1px solid #E5E7EB !important; /* border-gray-200 */
+  background-color: #ffffff !important;
+  padding: 0.625rem 0 !important; /* py-2.5 */
+  font-size: 0.875rem !important; /* text-sm */
+  font-weight: 700 !important; /* font-bold */
+  color: #111827 !important;
+  transition: all 150ms ease-in-out !important;
+  font-family: inherit !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+add-to-calendar-button::part(atcb-text) {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+@media (min-width: 640px) {
+  add-to-calendar-button::part(atcb-button) {
+    padding: 0.75rem 0 !important; /* sm:py-3 */
+  }
+}
+
+add-to-calendar-button::part(atcb-button):hover {
+  background-color: #F9FAFB !important; /* hover:bg-gray-50 */
+}

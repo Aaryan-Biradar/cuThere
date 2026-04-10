@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-/** Same chevron as event page / home carousel “back” control */
+/** Same chevron as event page / home carousel "back" control */
 function BackChevronIcon({ className = 'h-4 w-4' }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
@@ -69,16 +69,40 @@ function Footer() {
   );
 }
 
-/**
- * Future: POST /api/feedback with body:
- * { name: string | null, message: string, anonymous: boolean }
- */
+/** Toast notification that auto-dismisses */
+function Toast({ message, visible, onClose }) {
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [visible, onClose]);
+
+  return (
+    <div
+      className={`fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 transition-all duration-300 ${
+        visible
+          ? 'translate-y-0 opacity-100'
+          : 'pointer-events-none translate-y-4 opacity-0'
+      }`}
+    >
+      <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-lg">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <p className="text-sm font-semibold text-[#111827]">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function FeedbackPage() {
   const [scrolled, setScrolled] = useState(false);
-  const [name, setName] = useState('');
-  const [anonymous, setAnonymous] = useState(false);
-  const [message, setMessage] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | submitting | success | error
+  const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -87,11 +111,36 @@ export default function FeedbackPage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Wire-up point: send JSON to your API or third-party form endpoint.
-    setSubmitted(true);
+    setStatus('submitting');
+
+    // Grab the honeypot value from the hidden field
+    const honeypot = e.target.elements['_hp_company'].value;
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          feedback: feedback.trim(),
+          _hp_company: honeypot,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to submit');
+
+      setStatus('success');
+      setToastVisible(true);
+      setEmail('');
+      setFeedback('');
+    } catch {
+      setStatus('error');
+    }
   }
+
+  const isSuccess = status === 'success';
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
@@ -114,67 +163,110 @@ export default function FeedbackPage() {
             cuThere.
           </p>
 
-          {submitted ? (
+          {isSuccess ? (
             <div
               className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
               role="status"
             >
-              <p className="font-sans text-lg font-bold text-[#111827]">Thanks for reaching out.</p>
+              <p className="font-sans text-lg font-bold text-[#111827]">Thanks for reaching out! 🎉</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                This form isn&apos;t connected to a server yet — when it is, your message will be saved.
+                Your feedback has been sent to the team. We appreciate you helping us improve cuThere.
               </p>
-              <a
-                href="/"
-                className="mt-4 inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827]"
-              >
-                <BackChevronIcon />
-                Back
-              </a>
+              <div className="mt-4 flex flex-wrap items-center gap-4">
+                <a
+                  href="/"
+                  className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827]"
+                >
+                  <BackChevronIcon />
+                  Back to events
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setStatus('idle')}
+                  className="text-sm font-semibold text-[#D71920] transition hover:text-[#b81419]"
+                >
+                  Send more feedback
+                </button>
+              </div>
             </div>
           ) : (
             <form
               onSubmit={handleSubmit}
               className="mt-8 space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8"
             >
+              {/* ── Honeypot field — invisible to real users, traps bots ── */}
+              <div
+                className="absolute overflow-hidden"
+                style={{ height: 0, width: 0, opacity: 0 }}
+                aria-hidden="true"
+              >
+                <label htmlFor="_hp_company">
+                  Do not fill this out
+                  <input
+                    type="text"
+                    id="_hp_company"
+                    name="_hp_company"
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </label>
+              </div>
 
+              {/* ── Email (optional) ── */}
               <div>
-                <label htmlFor="feedback-name" className="block text-sm font-semibold text-[#111827]">
-                  Name <span className="font-normal text-slate-500">(optional)</span>
+                <label htmlFor="feedback-email" className="block text-sm font-semibold text-[#111827]">
+                  Email <span className="font-normal text-slate-500">(optional)</span>
                 </label>
                 <input
-                  id="feedback-name"
-                  type="text"
-                  name="name"
-                  autoComplete="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={anonymous}
-                  placeholder={anonymous ? 'Anonymous' : 'Your name'}
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-[#FCFAF7] px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-2 focus:ring-[#D71920]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  id="feedback-email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-[#FCFAF7] px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-2 focus:ring-[#D71920]/20"
                 />
               </div>
 
+              {/* ── Feedback (required) ── */}
               <div>
                 <label htmlFor="feedback-message" className="block text-sm font-semibold text-[#111827]">
                   Your feedback
                 </label>
                 <textarea
                   id="feedback-message"
-                  name="message"
+                  name="feedback"
                   required
                   rows={6}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
                   placeholder="What would you like us to know?"
                   className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-[#FCFAF7] px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-2 focus:ring-[#D71920]/20"
                 />
               </div>
 
+              {/* ── Error message ── */}
+              {status === 'error' && (
+                <p className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  Something went wrong. Please try again.
+                </p>
+              )}
+
+              {/* ── Submit ── */}
               <button
                 type="submit"
-                className="w-full rounded-xl border border-[#D71920] bg-[#D71920] py-3.5 text-sm font-bold text-white shadow-sm transition hover:border-[#b81419] hover:bg-[#b81419] sm:w-auto sm:min-w-[200px] sm:px-10"
+                disabled={status === 'submitting'}
+                className="w-full rounded-xl border border-[#D71920] bg-[#D71920] py-3.5 text-sm font-bold text-white shadow-sm transition hover:border-[#b81419] hover:bg-[#b81419] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[200px] sm:px-10"
               >
-                Submit feedback
+                {status === 'submitting' ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
+                    Sending…
+                  </span>
+                ) : (
+                  'Submit feedback'
+                )}
               </button>
             </form>
           )}
@@ -182,6 +274,11 @@ export default function FeedbackPage() {
       </main>
 
       <Footer />
+      <Toast
+        message="Feedback sent — thank you!"
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
+      />
     </div>
   );
 }
