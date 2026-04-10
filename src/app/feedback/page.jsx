@@ -20,7 +20,7 @@ function BackChevronIcon({ className = 'h-4 w-4' }) {
 function BrandLogo({ variant = 'header', scrolled = false }) {
   const isHeader = variant === 'header';
   const baseClasses =
-    'inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm';
+    'inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300';
   const headerStyles = scrolled
     ? 'border border-gray-200 bg-white'
     : 'border border-transparent bg-white';
@@ -170,7 +170,7 @@ export default function FeedbackPage() {
             >
               <p className="font-sans text-lg font-bold text-[#111827]">Thanks for reaching out! 🎉</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Your feedback has been sent to the team. We appreciate you helping us improve cuThere.
+                Your feedback has been sent to the team. We appreciate you helping us improve CUThere.
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <a

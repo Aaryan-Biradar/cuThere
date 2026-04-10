@@ -3,46 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import { formatEventDateTime } from '@/lib/eventDateUtils';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,
   loading: () => (
     <button
       type="button"
-      className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-[#D71920] bg-[#D71920] py-2.5 text-sm font-bold text-white shadow-sm sm:py-3"
+      disabled
+      className="flex w-full shrink-0 cursor-wait items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-bold text-[#111827] shadow-sm sm:py-3 box-border"
     >
-      Add to calendar
+      
     </button>
   ),
 });
-
-/**
- * Converts a YYYY-MM-DD date string (from the database) into a
- * human-friendly display string like "January 15".
- * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
- */
-function formatDisplayDate(dateString) {
-  if (!dateString) return '';
-  const trimmed = String(dateString).trim();
-
-  // Detect YYYY-MM-DD format from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  }
-
-  // Fallback: strip ordinal suffixes for legacy strings
-  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-}
-
-function formatEventDateTime(date, time) {
-  const displayDate = formatDisplayDate(date || '');
-  if (!displayDate && !time) return 'Date and time TBA';
-  const dateLabel = displayDate || 'Date TBA';
-  return time ? `${dateLabel} • ${time}` : dateLabel;
-}
 
 /**
  * Converts a 12-hour time string (e.g. "6:00 PM", "11:30 AM") to
@@ -92,70 +67,7 @@ function BackChevronIcon({ className = 'h-4 w-4' }) {
   );
 }
 
-function BrandLogo({ variant = 'header', scrolled = false }) {
-  const isHeader = variant === 'header';
-
-  // Base classes for the pill shape
-  const baseClasses = "inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm";
-
-  // Logic: 
-  // If it's the header, we want it white regardless of scroll.
-  // If scrolled, we add a subtle border so it doesn't disappear into the white header.
-  const headerStyles = scrolled
-    ? 'bg-white border border-gray-200'
-    : 'bg-white border border-transparent';
-
-  const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
-
-  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
-
-  return (
-    <a
-      href="/"
-      className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}
-    >
-      <img
-        src="/logo.png"
-        alt="cuThere"
-        className={imgClass}
-      />
-    </a>
-  );
-}
-
-function Header({ scrolled }) {
-  return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${scrolled ? 'border-b border-[#FCFAF7] bg-[#FCFAF7] shadow-md' : 'bg-transparent'
-        }`}
-    >
-      <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" scrolled={scrolled} />
-
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href="/feedback"
-            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:border-[#b81419] hover:bg-[#b81419]"
-          >
-            Feedback
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Footer({ className = '' }) {
-  const year = new Date().getFullYear();
-  return (
-    <footer className={`border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-8 sm:px-6 lg:px-12 ${className}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <BrandLogo variant="footer" />
-        <p className="font-sans text-xs text-[#6B7280]">© {year}</p>
-      </div>
-    </footer>
-  );
-}
+const DEFAULT_DOCUMENT_TITLE = 'cuThere — Discover Local Events';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -193,14 +105,25 @@ export default function EventDetailPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!event || event.error) {
+      document.title = DEFAULT_DOCUMENT_TITLE;
+      return undefined;
+    }
+    const label = event.title?.trim() || 'Untitled Event';
+    document.title = `${label} — CUThere`;
+    return () => {
+      document.title = DEFAULT_DOCUMENT_TITLE;
+    };
+  }, [event]);
+
   const shell = (children, { hideFooterOnMobile } = {}) => (
     <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
-      {/* No hero on this route — keep header in solid “scrolled” style for contrast */}
-      <Header scrolled />
+      <SiteHeader scrolled />
       <div className="flex min-h-0 flex-1 flex-col pt-[calc(env(safe-area-inset-top)+3.5rem)] sm:pt-[calc(env(safe-area-inset-top)+4rem)]">
         {children}
       </div>
-      <Footer className={hideFooterOnMobile ? 'hidden lg:block' : ''} />
+      <SiteFooter className={hideFooterOnMobile ? 'hidden lg:block' : ''} />
     </div>
   );
 
@@ -260,8 +183,8 @@ export default function EventDetailPage() {
   const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(parsedDateStr);
 
   const eventButtons = (
-    <div className="flex w-full flex-row gap-3">
-      <div className="flex-1 flex [&>add-to-calendar-button]:w-full [&>div]:w-full">
+    <div className="flex w-full min-w-0 flex-row flex-nowrap gap-2 sm:gap-3">
+      <div className="flex min-w-0 flex-1 [&>add-to-calendar-button]:w-full [&>div]:w-full">
         <CalendarButton
           name={event.title || 'Untitled Event'}
           options={['Apple', 'Google', 'Outlook.com']}
@@ -278,7 +201,7 @@ export default function EventDetailPage() {
         href={event.postUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex flex-1 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-bold text-[#111827] transition hover:bg-gray-50 sm:py-3 box-border"
+        className="flex min-w-0 flex-1 shrink items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-1 py-2.5 text-xs font-bold text-[#111827] transition hover:bg-gray-50 sm:gap-2 sm:px-2 sm:py-3 sm:text-sm box-border"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
           <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
@@ -301,13 +224,16 @@ export default function EventDetailPage() {
         </a>
 
         {/* Full-width image band on small screens */}
-        <div className="relative -mx-4 mb-6 overflow-hidden bg-[#F8F9FA] sm:-mx-6 sm:rounded-2xl lg:hidden">
+        <div className="relative -mx-4 mb-4 overflow-hidden bg-[#F8F9FA] sm:-mx-6 sm:rounded-2xl lg:hidden">
           <img
             src={imageSrc}
             alt={event.title || 'Event'}
             className="mx-auto block h-auto max-h-[min(42vh,20rem)] w-full object-contain object-center px-2 py-3 sm:max-h-[min(48vh,24rem)] sm:px-4"
           />
         </div>
+
+        {/* Mobile / tablet: calendar + Instagram in one row, directly under the image */}
+        <div className="mb-8 w-full min-w-0 lg:hidden">{eventButtons}</div>
 
         <a
           href="/"
@@ -352,8 +278,6 @@ export default function EventDetailPage() {
             </p>
           </div>
         )}
-
-        <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row lg:hidden">{eventButtons}</div>
       </article>
 
       {/* Desktop: Image + Buttons */}
@@ -366,7 +290,7 @@ export default function EventDetailPage() {
               className="mx-auto h-auto max-h-[50vh] w-full object-contain"
             />
           </div>
-          <div className="flex w-full flex-col gap-3">{eventButtons}</div>
+          <div className="flex w-full min-w-0 flex-col gap-3">{eventButtons}</div>
         </div>
       </div>
     </main>,
