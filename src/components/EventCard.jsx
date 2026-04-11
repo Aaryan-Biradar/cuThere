@@ -1,48 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-
-/**
- * Converts a YYYY-MM-DD date string (from the database) into a
- * human-friendly display string like "January 15".
- * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
- */
-function formatDisplayDate(dateString) {
-  if (!dateString) return '';
-  const trimmed = String(dateString).trim();
-
-  // Detect YYYY-MM-DD format from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    // Build a Date in local time (noon avoids timezone edge cases)
-    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  }
-
-  // Fallback: strip ordinal suffixes ("15th" → "15") for legacy strings
-  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-}
-
-function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const trimmed = String(dateString).trim();
-
-  // Handle YYYY-MM-DD from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    return new Date(Number(year), Number(month) - 1, Number(day));
-  }
-
-  // Legacy fallback for plain text dates
-  const cleaned = trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-  let date = new Date(cleaned);
-  if (Number.isNaN(date.getTime())) {
-    date = new Date(`${cleaned} ${new Date().getFullYear()}`);
-  }
-  return Number.isNaN(date.getTime()) ? null : date;
-}
+import { formatEventDateTime, parseEventDate } from '@/lib/eventDateUtils';
 
 function isTodayEvent(dateString) {
   const eventDate = parseEventDate(dateString);
@@ -55,17 +14,10 @@ function isTodayEvent(dateString) {
   );
 }
 
-function formatEventDateTime(date, time) {
-  const displayDate = formatDisplayDate(date || '');
-  if (!displayDate && !time) return 'Date and time TBA';
-  const dateLabel = displayDate || 'Date TBA';
-  return time ? `${dateLabel} · ${time}` : dateLabel;
-}
-
 export default function EventCard({ event, layout = 'carousel' }) {
   const router = useRouter();
   const hasId = event?.id != null && event?.id !== '';
-  const showTodayBadge = isTodayEvent(event?.date);
+  const showTodayBadge = isTodayEvent(event?.date || event?.event_date);
   const eventHref = hasId ? `/events/${encodeURIComponent(String(event.id))}` : '#';
 
   const widthClass =
@@ -103,7 +55,9 @@ export default function EventCard({ event, layout = 'carousel' }) {
 
       <div className="space-y-2 p-5">
         <h3 className="line-clamp-2 font-sans text-lg font-bold leading-snug text-[#111827]">{event?.title || 'Untitled Event'}</h3>
-        <p className="font-sans text-sm font-bold text-[#D71920]">{formatEventDateTime(event?.date || event?.event_date, event?.time)}</p>
+        <p className="font-sans text-sm font-bold text-[#D71920]">
+          {formatEventDateTime(event?.date || event?.event_date, event?.time, { omitYearIfCurrent: true })}
+        </p>
         <p className="inline-flex line-clamp-1 items-center gap-1.5 font-sans text-xs font-medium text-[#6B7280]">
           <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#9CA3AF]" fill="none" aria-hidden="true">
             <path

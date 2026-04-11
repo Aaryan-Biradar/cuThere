@@ -2,56 +2,14 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import EventCard from '@/components/EventCard';
+import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import { parseEventDate } from '@/lib/eventDateUtils';
 
 const DEFAULT_TAG_PILLS = ['All', 'This Week'];
 const sideMargin = 'lg:px-37';
 
-/**
- * Converts a YYYY-MM-DD date string (from the database) into a
- * human-friendly display string like "January 15".
- * If the string isn't in YYYY-MM-DD format, it passes through unchanged.
- */
-function formatDisplayDate(dateString) {
-  if (!dateString) return '';
-  const trimmed = String(dateString).trim();
-
-  // Detect YYYY-MM-DD format from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    // Build a Date in local time (noon avoids timezone edge cases)
-    const date = new Date(Number(year), Number(month) - 1, Number(day), 12);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  }
-
-  // Fallback: strip ordinal suffixes ("15th" → "15") for legacy strings
-  return trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-}
-
-function parseEventDate(dateString) {
-  if (!dateString) return null;
-  const trimmed = String(dateString).trim();
-
-  // Handle YYYY-MM-DD from the database
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    return new Date(Number(year), Number(month) - 1, Number(day));
-  }
-
-  // Legacy fallback for plain text dates
-  const cleaned = trimmed.replace(/\b(\d+)(st|nd|rd|th)\b/gi, '$1');
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  let date = new Date(`${cleaned}, ${currentYear}`);
-  if (Number.isNaN(date.getTime())) return null;
-
-  // Pivot Logic for legacy strings
-  const eventMonth = date.getMonth();
-  if (eventMonth > 4) {
-    date.setFullYear(currentYear - 1);
-  }
-  return date;
+function eventDateField(event) {
+  return event?.date ?? event?.event_date;
 }
 
 function startOfDay(date) {
@@ -64,13 +22,6 @@ function addDays(date, amount) {
   const copy = new Date(date);
   copy.setDate(copy.getDate() + amount);
   return copy;
-}
-
-function formatEventDateTime(eventDate, eventTime) {
-  const displayDate = formatDisplayDate(eventDate || '');
-  if (!displayDate && !eventTime) return 'Date and time TBA';
-  const dateLabel = displayDate || 'Date TBA';
-  return eventTime ? `${dateLabel} • ${eventTime}` : dateLabel;
 }
 
 function slugifySection(title) {
@@ -88,75 +39,6 @@ function uniqueByEventId(items) {
     seen.add(key);
     return true;
   });
-}
-
-function BrandLogo({ variant = 'header', scrolled = false }) {
-  const isHeader = variant === 'header';
-  
-  // Base classes for the pill shape
-  const baseClasses = "inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300 shadow-sm";
-  
-  // Logic: 
-  // If it's the header, we want it white regardless of scroll.
-  // If scrolled, we add a subtle border so it doesn't disappear into the white header.
-  const headerStyles = scrolled 
-    ? 'bg-white border border-gray-200' 
-    : 'bg-white border border-transparent';
-
-  const footerStyles = 'bg-white border border-gray-200 opacity-90 hover:opacity-100';
-
-  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
-
-  return (
-    <a
-      href="/"
-      className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}
-    >
-      <img 
-        src="/logo.png" 
-        alt="cuThere" 
-        className={imgClass} 
-      />
-    </a>
-  );
-}
-
-function Header({ scrolled }) {
-  return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'bg-[#FCFAF7] border-b border-[#FCFAF7] shadow-md' : 'bg-transparent '
-      }`}
-    >
-      <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" scrolled={scrolled} />
-
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href="/feedback"
-            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
-          >
-            Feedback
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Footer() {
-  const year = new Date().getFullYear();
-  return (
-    <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-3 sm:px-6 lg:px-12">
-      <div className="mx-auto flex h-10 max-w-7xl items-center justify-between">
-        <div className="flex items-center">
-        </div>
-        <p className="font-sans text-[10px] font-medium  tracking-widest text-[#9CA3AF]">
-          © {year} CU There
-        </p>
-      </div>
-    </footer>
-  );
 }
 
 function Hero() {
@@ -435,25 +317,19 @@ function HomePage() {
   
     // 1. Deduplicate and Sort as you already do
     const sorted = uniqueByEventId([...events]).sort((a, b) => {
-      const aDate = parseEventDate(a?.date)?.getTime() || Number.POSITIVE_INFINITY;
-      const bDate = parseEventDate(b?.date)?.getTime() || Number.POSITIVE_INFINITY;
+      const aDate = parseEventDate(eventDateField(a))?.getTime() || Number.POSITIVE_INFINITY;
+      const bDate = parseEventDate(eventDateField(b))?.getTime() || Number.POSITIVE_INFINITY;
       return aDate - bDate;
     });
-  
-    // 2. NEW: Filter out past events globally
-    // This ensures that neither "This Week" nor any "Category" section shows old data.
+
     const futureEvents = sorted.filter((event) => {
-      const eventDate = parseEventDate(event?.date);
+      const eventDate = parseEventDate(eventDateField(event));
       if (!eventDate) return false;
-  
-      // Compare using .getTime() to ensure we are comparing numerical timestamps
-      // This removes the "past" events effectively
       return eventDate.getTime() >= today.getTime();
     });
-  
-    // 3. Filter "This Week" from the already-filtered future list
+
     const weekEvents = futureEvents.filter((event) => {
-      const eventDate = parseEventDate(event?.date);
+      const eventDate = parseEventDate(eventDateField(event));
       return eventDate <= weekEnd;
     });
   
@@ -482,7 +358,7 @@ function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#FCFAF7] text-[#111827] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-      <Header scrolled={scrolled} />
+      <SiteHeader scrolled={scrolled} />
       <Hero />
       <SearchAndPills
         pills={pillLabels}
@@ -516,7 +392,7 @@ function HomePage() {
         </section>
       )}
 
-      <Footer />
+      <SiteFooter />
     </main>
   );
 }
