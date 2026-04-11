@@ -123,7 +123,6 @@ const input = {
         "https://www.instagram.com/gca_carleton/",
         "https://www.instagram.com/healthtechinnovators/",
         "https://www.instagram.com/hccarleton/",
-        "https://www.instagram.com/hillelottawa/",
         "https://www.instagram.com/h.o.l.a.s/",
         "https://www.instagram.com/ijvcarleton/",
         "https://www.instagram.com/intervarsity_cu/",
