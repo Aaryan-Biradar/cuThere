@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { countRsvps } from '@/lib/events';
 
 // POST /api/rsvp
 export async function POST(request) {
@@ -41,16 +42,8 @@ export async function POST(request) {
       args: [user_name, event_id]
     });
 
-    // Get updated RSVP count
-    let rsvp_count = 1;
-    try {
-      const countResult = await db.execute({
-        sql: `SELECT count(*) as count FROM RSVPs WHERE event_id = ?`,
-        args: [event_id]
-      });
-      const countRow = countResult.rows[0];
-      rsvp_count = countRow ? countRow.count : 1;
-    } catch(e) {}
+    // Get updated RSVP count (real count, or 0 on error — never a fake default)
+    const rsvp_count = await countRsvps(db, event_id);
 
     return NextResponse.json({ message: 'RSVP created', rsvp_count, is_demo: false }, { status: 201 });
   } catch (error) {
@@ -74,16 +67,8 @@ export async function DELETE(request) {
       args: [user_name, event_id]
     });
 
-    // Get updated RSVP count
-    let rsvp_count = 0;
-    try {
-      const countResult = await db.execute({
-        sql: `SELECT count(*) as count FROM RSVPs WHERE event_id = ?`,
-        args: [event_id]
-      });
-      const countRow = countResult.rows[0];
-      rsvp_count = countRow ? countRow.count : 0;
-    } catch(e) {}
+    // Get updated RSVP count (real count, or 0 on error)
+    const rsvp_count = await countRsvps(db, event_id);
 
     return NextResponse.json({ message: 'RSVP removed', rsvp_count, is_demo: false }, { status: 200 });
   } catch (error) {
