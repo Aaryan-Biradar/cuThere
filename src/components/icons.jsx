@@ -5,13 +5,31 @@
 
 /**
  * Left-pointing chevron used for "Back" links and the home-page carousel
- * "scroll left" control. (The carousel "scroll right" control mirrors this path.)
+ * "scroll left" control.
  */
 export function ChevronLeftIcon({ className = 'h-4 w-4' }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
       <path
         d="M15 6l-6 6 6 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Right-pointing chevron (mirror of ChevronLeftIcon) used for the home-page
+ * carousel "scroll right" control.
+ */
+export function ChevronRightIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <path
+        d="M9 6l6 6-6 6"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"

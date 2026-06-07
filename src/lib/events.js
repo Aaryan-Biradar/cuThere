@@ -7,13 +7,10 @@
  */
 
 // Default category shown when an event has no tags.
-export const DEFAULT_CATEGORY = 'Uncategorized';
+const DEFAULT_CATEGORY = 'Uncategorized';
 
 // 10h — used as the `revalidate` safety net for the cached events reads.
 export const EVENTS_REVALIDATE_SECONDS = 60 * 60 * 10;
-
-// Cap on how many "related" events a detail page returns.
-export const RELATED_EVENTS_LIMIT = 5;
 
 // Core event SELECT: the 8 aliased columns plus the aggregated tags/hosts arrays, with the LEFT
 // JOINs onto categories and organizations. Callers append their own WHERE / GROUP BY / ORDER /
@@ -39,7 +36,7 @@ export const EVENT_SELECT_BASE = `
 
 // Parse a json_group_array() string into a clean array, dropping the [null] / null entries
 // SQLite emits when a LEFT JOIN finds no match. Never throws.
-export function parseJsonArray(str) {
+function parseJsonArray(str) {
   try { return JSON.parse(str || '[]').filter(Boolean); } catch { return []; }
 }
 
