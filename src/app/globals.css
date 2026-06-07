@@ -6,6 +6,18 @@
   --font-brand-serif:  Georgia, serif;
 }
 
+/*
+ * Tailwind v4 design tokens. `@theme` is how this project actually wires colors
+ * into utility classes (the v3-style tailwind.config.js is not loaded by the v4
+ * PostCSS plugin). Each `--color-*` here generates bg-/text-/border-/ring-* utils
+ * plus opacity modifiers (e.g. `bg-university-red/5`, `ring-university-red/20`).
+ */
+@theme {
+  --color-university-red: #D71920;
+  --color-university-red-hover: #b81419;
+  --color-brand-cream: #FCFAF7;
+}
+
 html {
   /* Stops iOS Safari / WKWebView from auto-scaling text (feels like random “zoom”) */
   -webkit-text-size-adjust: 100%;
