@@ -5,7 +5,7 @@ import EventCard from '@/components/EventCard';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { parseEventDate } from '@/lib/eventDateUtils';
 
-const DEFAULT_TAG_PILLS = ['All', 'This Week'];
+const DEFAULT_TAG_PILLS = ['All'];
 // Tags pinned to the front of the list (right after the "This Week" section);
 // every other tag is ordered alphabetically.
 const PINNED_TAGS = ['Free Food'];
@@ -306,18 +306,6 @@ function HomePage() {
     return Array.from(tags).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   }, [events]);
 
-  const pillLabels = useMemo(() => {
-    const ordered = [];
-    const seen = new Set();
-    [...DEFAULT_TAG_PILLS, ...activeTags].forEach((tag) => {
-      if (!seen.has(tag)) {
-        ordered.push(tag);
-        seen.add(tag);
-      }
-    });
-    return ordered;
-  }, [activeTags]);
-
   const sections = useMemo(() => {
     const today = startOfDay(new Date());
     const weekEnd = addDays(today, 7);
@@ -355,6 +343,27 @@ function HomePage() {
     ];
   }, [events, activeTags]);
 
+  // Hide sections (categories or "This Week") that have no upcoming events,
+  // so empty "0 events" placeholders don't clutter the home page.
+  const visibleSections = useMemo(
+    () => sections.filter((section) => section.events.length > 0),
+    [sections]
+  );
+
+  // Keep the filter pills in sync with the sections that are actually shown,
+  // so a pill never scrolls to a section that isn't there.
+  const pillLabels = useMemo(() => {
+    const ordered = [];
+    const seen = new Set();
+    [...DEFAULT_TAG_PILLS, ...visibleSections.map((section) => section.title)].forEach((tag) => {
+      if (!seen.has(tag)) {
+        ordered.push(tag);
+        seen.add(tag);
+      }
+    });
+    return ordered;
+  }, [visibleSections]);
+
   function handlePillClick(pill) {
     setActivePill(pill);
     const targetId = pill === 'All' ? 'events-anchor' : slugifySection(pill);
@@ -388,14 +397,20 @@ function HomePage() {
         <SearchResultsSection query={activeSearchQuery} events={searchResults} />
       ) : (
         <section id="events" className="mx-auto max-w-7xl pb-10">
-          {sections.map((section) => (
-            <EventSection
-              key={section.sectionId}
-              title={section.title}
-              sectionId={section.sectionId}
-              events={section.events}
-            />
-          ))}
+          {visibleSections.length === 0 ? (
+            <p className={`px-4 py-10 text-sm text-[#6B7280] sm:px-6 ${sideMargin}`}>
+              No upcoming events right now. Check back soon!
+            </p>
+          ) : (
+            visibleSections.map((section) => (
+              <EventSection
+                key={section.sectionId}
+                title={section.title}
+                sectionId={section.sectionId}
+                events={section.events}
+              />
+            ))
+          )}
         </section>
       )}
 
