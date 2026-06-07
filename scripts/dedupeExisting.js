@@ -41,7 +41,7 @@ async function withRetry(op, maxRetries = 3, delayMs = 4000) {
         try {
             return await op();
         } catch (e) {
-            const overloaded = e?.message?.includes('503') || e?.message?.includes('429') || e?.message?.includes('UNAVAILABLE');
+            const overloaded = e?.message?.includes('503') || e?.message?.includes('UNAVAILABLE'); // not 429 — a quota cap won't recover by retrying
             if (overloaded && attempt < maxRetries) {
                 await wait(delayMs);
                 delayMs *= 1.5;
@@ -255,6 +255,10 @@ async function confirmCluster(cluster) {
             // An expired/invalid key (or other auth/400) fails EVERY call — abort loudly.
             if (e?.status === 400 || /API key|API_KEY_INVALID|expired|PERMISSION_DENIED|invalid argument/i.test(msg)) {
                 throw new Error(`Gemini call failed — likely an API key problem. Renew GEMINI_API_KEY and re-run. Original error: ${msg}`);
+            }
+            // Quota exhausted (429) won't recover by retrying — stop with a clear message.
+            if (e?.status === 429 || /quota|RESOURCE_EXHAUSTED|billing/i.test(msg)) {
+                throw new Error(`Gemini quota exhausted (429) — stopping. The daily/plan quota for this API key is used up; wait for it to reset or raise the limit, then re-run. Original error: ${msg}`);
             }
             errored.push({ member, reasoning: `Gemini error: ${msg}` });
         }
