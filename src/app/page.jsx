@@ -9,7 +9,9 @@ import { getCachedEvents, setCachedEvents } from '@/lib/eventsCache';
 const DEFAULT_TAG_PILLS = ['All'];
 // Tags pinned to the front of the list (right after the "This Week" section);
 // every other tag is ordered by how many upcoming events it has (most first).
-const PINNED_TAGS = ['Free Food'];
+const PINNED_TAGS = process.env.NEXT_PUBLIC_PINNED_TAGS
+  ? process.env.NEXT_PUBLIC_PINNED_TAGS.split(',').map((t) => t.trim()).filter(Boolean)
+  : ['Free Food'];
 const sideMargin = 'lg:px-37';
 
 function eventDateField(event) {
@@ -271,8 +273,8 @@ function HomePage() {
         if (Array.isArray(data)) {
           const normalized = data.map((event) => ({
             ...event,
-            category: event.category || event.source_platform || 'Academic',
-            tags: event.tags || [event.category || event.source_platform || 'Academic'],
+            category: event.category || event.source_platform || 'Uncategorized',
+            tags: event.tags || [event.category || event.source_platform || 'Uncategorized'],
           }));
           setEvents(normalized);
           setCachedEvents(normalized);
@@ -308,7 +310,7 @@ function HomePage() {
 
   const sections = useMemo(() => {
     const today = startOfDay(new Date());
-    const weekEnd = addDays(today, 7);
+    const weekEnd = addDays(today, Number(process.env.NEXT_PUBLIC_THIS_WEEK_DAYS) || 7);
   
     // 1. Deduplicate and Sort as you already do
     const sorted = uniqueByEventId([...events]).sort((a, b) => {

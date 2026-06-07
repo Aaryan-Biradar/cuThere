@@ -126,7 +126,7 @@ export default function EventDetailPage() {
       return undefined;
     }
     const label = event.title?.trim() || 'Untitled Event';
-    document.title = `${label} — CUThere`;
+    document.title = `${label} — cuThere`;
     return () => {
       document.title = DEFAULT_DOCUMENT_TITLE;
     };
@@ -207,7 +207,7 @@ export default function EventDetailPage() {
           {...(hasValidDate ? { startDate: parsedDateStr } : {})}
           {...(hasValidDate && startTime24 ? { startTime: startTime24 } : {})}
           {...(hasValidDate && endTime24 ? { endTime: endTime24 } : {})}
-          timeZone="America/Toronto"
+          timeZone={process.env.NEXT_PUBLIC_TIMEZONE || 'America/Toronto'}
           description={event.description || ''}
           lightMode="light"
         />

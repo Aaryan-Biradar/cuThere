@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 
 /** Same chevron as event page / home carousel "back" control */
 function BackChevronIcon({ className = 'h-4 w-4' }) {
@@ -14,58 +15,6 @@ function BackChevronIcon({ className = 'h-4 w-4' }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-function BrandLogo({ variant = 'header', scrolled = false }) {
-  const isHeader = variant === 'header';
-  const baseClasses =
-    'inline-flex items-center justify-center rounded-full px-4 py-0.5 transition-all duration-300';
-  const headerStyles = scrolled
-    ? 'border border-gray-200 bg-white'
-    : 'border border-transparent bg-white';
-  const footerStyles =
-    'border border-gray-200 bg-white opacity-90 hover:opacity-100';
-  const imgClass = variant === 'footer' ? 'h-7 w-auto' : 'h-8 w-auto sm:h-9';
-
-  return (
-    <a href="/" className={`${baseClasses} ${isHeader ? headerStyles : footerStyles}`}>
-      <img src="/logo.png" alt="cuThere" className={imgClass} />
-    </a>
-  );
-}
-
-function Header({ scrolled }) {
-  return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled ? 'border-b border-[#FCFAF7] bg-[#FCFAF7] shadow-md' : 'bg-[#FCFAF7]'
-      }`}
-    >
-      <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
-        <BrandLogo variant="header" scrolled={scrolled} />
-        <div className="ml-auto flex items-center gap-2">
-          <span
-            className="rounded-full border border-[#D71920] bg-white px-4 py-2 text-sm font-bold text-[#D71920]"
-            aria-current="page"
-          >
-            Feedback
-          </span>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Footer() {
-  const year = new Date().getFullYear();
-  return (
-    <footer className="border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-3 sm:px-6 lg:px-12">
-      <div className="mx-auto flex h-10 max-w-7xl items-center justify-between">
-        <BrandLogo variant="footer" />
-        <p className="font-sans text-[10px] font-medium tracking-widest text-[#9CA3AF]">© {year} CU There</p>
-      </div>
-    </footer>
   );
 }
 
@@ -144,7 +93,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
-      <Header scrolled={scrolled} />
+      <SiteHeader scrolled={scrolled} activeLabel="Feedback" />
 
       <main className="flex flex-1 flex-col px-4 pb-12 pt-[calc(env(safe-area-inset-top)+4.5rem)] sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+5rem)] lg:px-12">
         <div className="mx-auto w-full max-w-lg">
@@ -170,7 +119,7 @@ export default function FeedbackPage() {
             >
               <p className="font-sans text-lg font-bold text-[#111827]">Thanks for reaching out! 🎉</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Your feedback has been sent to the team. We appreciate you helping us improve CUThere.
+                Your feedback has been sent to the team. We appreciate you helping us improve cuThere.
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <a
@@ -273,7 +222,7 @@ export default function FeedbackPage() {
         </div>
       </main>
 
-      <Footer />
+      <SiteFooter />
       <Toast
         message="Feedback sent — thank you!"
         visible={toastVisible}
