@@ -1,19 +1,33 @@
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
+import { readFileSync } from 'node:fs';
+import db from './db.js';
 
 // Initialize the AI with your API key
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Define your master list of allowed tags
-const masterTags = [
-    "Academic", 
-    "Social", 
-    "Career & Networking", 
-    "Tech & Software", 
-    "Free Food", 
-    "Arts & Culture",
-    "Sports"
-];
+// Load the Carleton building-code map once at module level (ESM-safe fs read)
+const buildingMap = JSON.parse(
+    readFileSync(new URL('../../config/buildings.json', import.meta.url), 'utf8')
+);
+
+// Build the prompt lines for the building map dynamically from the JSON config
+const buildingMapLines = Object.entries(buildingMap)
+    .map(([code, name]) => `        ${code}: ${name}`)
+    .join('\n');
+
+// Memoized async helper — reads category names from the DB once, then caches them
+let _cachedMasterTags = null;
+async function getMasterTags() {
+    if (_cachedMasterTags !== null) return _cachedMasterTags;
+    const result = await db.execute('SELECT category_name FROM CATEGORY');
+    const tags = result.rows.map((row) => row.category_name);
+    if (tags.length === 0) {
+        console.warn('[ai.js] getMasterTags: CATEGORY table returned no rows — tags list will be empty');
+    }
+    _cachedMasterTags = tags;
+    return _cachedMasterTags;
+}
 
 // Quick filter: asks Gemini if a post is actually an event or not
 // Now accepts a raw ArrayBuffer instead of fetching from a URL
@@ -35,14 +49,16 @@ export async function isEvent(imageBuffer, caption) {
 
 // Now accepts a raw ArrayBuffer instead of fetching from a URL
 export async function analyzeFlyer(imageBuffer, caption) {
+    const masterTags = await getMasterTags();
+
     // 1. We tell the AI exactly what we want in the prompt
     const prompt = `
         Look at this event flyer and the provided caption. Extract the event details and return ONLY a valid JSON object.
-        
+
         CRITICAL RULE FOR TAGS:
-        For the "tags" array, you MUST ONLY select applicable tags from this exact list: 
+        For the "tags" array, you MUST ONLY select applicable tags from this exact list:
         ${JSON.stringify(masterTags)}
-        
+
         Do not invent new tags. If none apply, return an empty array [].
 
         CRITICAL RULE FOR DATES:
@@ -53,34 +69,8 @@ export async function analyzeFlyer(imageBuffer, caption) {
 
         CRITICAL RULE FOR LOCATIONS:
         The "location" should be the full name of the building. Use the following key to map Carleton building codes to their full names:
-        AA: Architecture Building
-        AC: Athletics Building
-        AP: Azrieli Pavilion
-        AT: Azrieli Theatre
-        CB: Canal Building
-        DT: Dunton Tower
-        FH: Field House
-        HC: Human Computer Interaction Building
-        HP: Herzberg Laboratories
-        HS: Health Sciences Building
-        LA: Loeb Building
-        MC: Minto Centre 
-        ME: Mackenzie Building
-        ML: MacOdrum Library
-        NB: Nesbitt Biology Building
-        NI: Nicol Building
-        NN: Nideyinàn 
-        PA: Paterson Hall
-        PK: Pigiarvik (formerly Robertson Hall)
-        RB: Richcraft Hall
-        SA: Southam Hall
-        SC: Steacie Building
-        SP: St. Patrick's Building
-        TB: Tory Building
-        TC: Teraanga Commons
-        TT: Carleton Technology and Training Center
-        VS: Visualization & Simulation Building (VSM)
-        
+${buildingMapLines}
+
         For example, if you see "ME 3380", your location should be "Mackenzie Building 3380".
 
         Expected JSON format:
@@ -137,6 +127,7 @@ function truncate(value, max = 700) {
  *                     merged:object|null, reasoning:string }>}
  */
 export async function findDuplicateAndMerge({ incoming, candidates }) {
+    const masterTags = await getMasterTags();
     const incomingPayload = {
         title: incoming?.eventName ?? incoming?.event_title ?? '',
         date: incoming?.date ?? incoming?.event_date ?? '',
