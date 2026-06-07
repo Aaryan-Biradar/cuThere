@@ -9,8 +9,8 @@
 // Default category shown when an event has no tags.
 export const DEFAULT_CATEGORY = 'Uncategorized';
 
-// 24h — used as the `revalidate` safety net for the cached events reads.
-export const EVENTS_REVALIDATE_SECONDS = 60 * 60 * 24;
+// 10h — used as the `revalidate` safety net for the cached events reads.
+export const EVENTS_REVALIDATE_SECONDS = 60 * 60 * 10;
 
 // Cap on how many "related" events a detail page returns.
 export const RELATED_EVENTS_LIMIT = 5;
