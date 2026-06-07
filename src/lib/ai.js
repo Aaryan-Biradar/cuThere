@@ -117,3 +117,123 @@ export async function analyzeFlyer(imageBuffer, caption) {
 
     return JSON.parse(cleanText);
 }
+
+
+// Keep prompt/token cost bounded by trimming long captions.
+function truncate(value, max = 700) {
+    if (value == null) return '';
+    const str = String(value);
+    return str.length > max ? `${str.slice(0, max)}…` : str;
+}
+
+/**
+ * Decides whether an INCOMING analyzed event duplicates one of the prefiltered CANDIDATE
+ * events, and if so returns the best merged version. Text-only (no images).
+ *
+ * @param {object}   incoming    { eventName, date, time, location, description, tags[], hasFreeFood, hosts[], post_timestamp }
+ * @param {object[]} candidates  existing events with { event_id, event_title, event_date, event_time,
+ *                               event_location, event_description, tags[], hosts[], post_timestamp, path:'same'|'cross' }
+ * @returns {Promise<{ isDuplicate:boolean, matchedEventId:string|null, confidence:number,
+ *                     merged:object|null, reasoning:string }>}
+ */
+export async function findDuplicateAndMerge({ incoming, candidates }) {
+    const incomingPayload = {
+        title: incoming?.eventName ?? incoming?.event_title ?? '',
+        date: incoming?.date ?? incoming?.event_date ?? '',
+        time: incoming?.time ?? incoming?.event_time ?? '',
+        location: incoming?.location ?? incoming?.event_location ?? '',
+        description: truncate(incoming?.description ?? incoming?.event_description ?? ''),
+        tags: incoming?.tags ?? [],
+        hasFreeFood: incoming?.hasFreeFood ?? false,
+        hosts: incoming?.hosts ?? [],
+        post_timestamp: incoming?.post_timestamp ?? null,
+    };
+
+    const candidatePayload = (candidates || []).map((c, i) => ({
+        ref: `c${i}`,
+        title: c.event_title,
+        date: c.event_date,
+        time: c.event_time,
+        location: c.event_location,
+        description: truncate(c.event_description),
+        tags: c.tags ?? [],
+        hasFreeFood: (c.tags ?? []).includes('Free Food'),
+        hosts: c.hosts ?? [],
+        post_timestamp: c.post_timestamp ?? null,
+        matchType: c.path === 'cross' ? 'cross-account' : 'same-account',
+    }));
+
+    const prompt = `
+        You are de-duplicating Carleton University event posts. Student orgs often post the SAME
+        event multiple times (a flyer, a hype photo, an updated flyer), creating duplicate records.
+        Decide whether the INCOMING post describes the SAME real-world event as one of the CANDIDATES.
+        Weigh ALL the provided fields together — title, date, time, location, hosts (the posting
+        account and co-hosts), tags, and especially the description/caption — not the title alone.
+
+        RULES:
+        - SAME-ACCOUNT candidates (matchType "same-account") = the same org reposting. A hype photo
+          with a missing or "TBA" time/location is STILL the same event if the title and date align.
+        - CROSS-ACCOUNT candidates (matchType "cross-account") = different orgs. Only mark a duplicate
+          if title AND date AND location all strongly agree. Two different orgs running similarly-named
+          events on the same day (e.g. two separate "Shawarma Fest" events) are DIFFERENT — do NOT merge.
+        - Use the "description" (the post caption) as an important signal: overlapping event details,
+          organizer, schedule, or wording across the descriptions is strong evidence of the SAME event,
+          while clearly different descriptions are evidence they are DIFFERENT events.
+        - The version with the latest post_timestamp is the most current; when two REAL values genuinely
+          conflict (e.g. a changed date or location), prefer the most current one.
+
+        If it IS a duplicate, also produce "merged": the best single version, choosing FOR EACH FIELD the
+        most complete and most current REAL value across the incoming post and the matched candidate.
+        NEVER choose an empty string or a placeholder ("TBA","Date TBA","Time TBA","Location TBA") over a
+        real value. Keep "date" in YYYY-MM-DD format if a real date is available. "tags" must be the UNION
+        of both versions' tags, restricted to exactly this list: ${JSON.stringify(masterTags)}.
+
+        INCOMING:
+        ${JSON.stringify(incomingPayload, null, 2)}
+
+        CANDIDATES:
+        ${JSON.stringify(candidatePayload, null, 2)}
+
+        Respond with ONLY a JSON object in EXACTLY this shape (no markdown):
+        {
+          "isDuplicate": true,
+          "matchedRef": "the ref of the matched candidate (e.g. \"c0\"), or null",
+          "confidence": 0.0,
+          "merged": {
+            "eventName": "...",
+            "date": "...",
+            "time": "...",
+            "location": "...",
+            "description": "...",
+            "tags": ["..."],
+            "hasFreeFood": true
+          },
+          "reasoning": "one short sentence"
+        }
+        If it is NOT a duplicate, set "isDuplicate" false, "matchedEventId" null, and "merged" null.
+    `;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [prompt],
+    });
+
+    const cleanText = response.text.replace(/```(json)?\n?/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleanText);
+
+    // Resolve the short ref back to the precise event_id locally — avoids JSON number-precision loss
+    // on 19-digit Instagram ids that Gemini might echo unquoted.
+    let matchedEventId = null;
+    if (parsed.isDuplicate && parsed.matchedRef != null) {
+        const idx = candidatePayload.findIndex((c) => c.ref === String(parsed.matchedRef).trim());
+        if (idx !== -1) matchedEventId = candidates[idx].event_id;
+    }
+
+    return {
+        isDuplicate: Boolean(parsed.isDuplicate) && matchedEventId !== null,
+        matchedEventId,
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : Number(parsed.confidence) || 0,
+        merged: matchedEventId ? (parsed.merged ?? null) : null,
+        reasoning: parsed.reasoning ?? '',
+    };
+}
