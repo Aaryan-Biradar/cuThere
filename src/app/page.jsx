@@ -8,7 +8,7 @@ import { getCachedEvents, setCachedEvents } from '@/lib/eventsCache';
 
 const DEFAULT_TAG_PILLS = ['All'];
 // Tags pinned to the front of the list (right after the "This Week" section);
-// every other tag is ordered alphabetically.
+// every other tag is ordered by how many upcoming events it has (most first).
 const PINNED_TAGS = ['Free Food'];
 const sideMargin = 'lg:px-37';
 
@@ -303,11 +303,7 @@ function HomePage() {
       (event.tags || []).forEach((tag) => tags.add(tag));
       if (event.category) tags.add(event.category);
     });
-    const rank = (tag) => {
-      const index = PINNED_TAGS.indexOf(tag);
-      return index === -1 ? PINNED_TAGS.length : index;
-    };
-    return Array.from(tags).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    return Array.from(tags);
   }, [events]);
 
   const sections = useMemo(() => {
@@ -332,15 +328,28 @@ function HomePage() {
       return eventDate <= weekEnd;
     });
   
-    // 4. Create tag sections using the filtered future list
-    const tagSections = activeTags.map((tag) => ({
-      title: tag,
-      sectionId: slugifySection(tag),
-      events: futureEvents.filter(
-        (event) => event.category === tag || (event.tags || []).includes(tag)
-      ),
-    }));
-  
+    // Build a section per tag, then order them: pinned tags (e.g. Free Food)
+    // first, then whichever tag has the most upcoming events, name as tiebreaker.
+    const rank = (tag) => {
+      const index = PINNED_TAGS.indexOf(tag);
+      return index === -1 ? PINNED_TAGS.length : index;
+    };
+
+    const tagSections = activeTags
+      .map((tag) => ({
+        title: tag,
+        sectionId: slugifySection(tag),
+        events: futureEvents.filter(
+          (event) => event.category === tag || (event.tags || []).includes(tag)
+        ),
+      }))
+      .sort(
+        (a, b) =>
+          rank(a.title) - rank(b.title) ||
+          b.events.length - a.events.length ||
+          a.title.localeCompare(b.title)
+      );
+
     return [
       { title: 'This Week', sectionId: slugifySection('This Week'), events: weekEvents },
       ...tagSections,
