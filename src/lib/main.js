@@ -1,7 +1,9 @@
 import { put } from '@vercel/blob';
 import { scrapeLatestPost } from './scraper.js';
-import { isEvent, analyzeFlyer } from './ai.js';
+import { isEvent, analyzeFlyer, findDuplicateAndMerge } from './ai.js';
 import { insertEventToDatabase, normalizeEventDate } from './eventInsert.js';
+import { findCandidates, SAME_ACCOUNT_CONFIRM_MIN, CROSS_ACCOUNT_CONFIRM_MIN } from './dedup.js';
+import { applyMerge } from './eventMerge.js';
 import db from './db.js';
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -105,18 +107,66 @@ async function runPipeline() {
         const permanentImageUrl = blob.url;
         console.log(`   🔗 Permanent URL: ${permanentImageUrl}`);
 
-        // STEP 6: Insert the structured data into Turso (with the permanent Blob URL)
-        console.log("   💾 Inserting into Database...");
+        // STEP 6: Detect duplicates, then either MERGE into an existing event or INSERT a new one
+        const hostUsernames = [
+            post.ownerUsername,
+            ...((post.coauthorProducers || []).map((c) => c.username)),
+        ].filter(Boolean);
+
         try {
-            const insertResult = await insertEventToDatabase(eventData, postId, {
-                ownerUsername: post.ownerUsername,
-                ownerFullName: post.ownerFullName,
-                coauthorProducers: post.coauthorProducers,
-                displayUrl: permanentImageUrl, // ← Permanent Vercel Blob URL instead of expiring Apify URL
-                caption: post.caption,
-                postUrl: post.url
+            // Cheap prefilter first — only spend a Gemini call when there's something to compare against.
+            const { sameAccount, crossAccount } = await findCandidates({
+                incoming: eventData,
+                hostUsernames,
+                normalizedDate: eventData.date,
             });
-            console.log(`   ✅ Inserted! Event ID: ${insertResult.eventId}`);
+            const candidates = [...sameAccount, ...crossAccount];
+
+            let dedup = { isDuplicate: false };
+            if (candidates.length > 0) {
+                console.log(`   🔎 ${candidates.length} possible duplicate(s) — confirming with Gemini...`);
+                dedup = await executeWithRetry(() => findDuplicateAndMerge({
+                    // Use the raw caption as the description so it's comparable to candidates'
+                    // stored event_description (also the caption).
+                    incoming: { ...eventData, description: post.caption, hosts: hostUsernames, post_timestamp: post.timestamp },
+                    candidates,
+                }));
+            }
+
+            const matched = candidates.find((c) => c.event_id === dedup.matchedEventId);
+            const threshold = matched?.path === 'cross' ? CROSS_ACCOUNT_CONFIRM_MIN : SAME_ACCOUNT_CONFIRM_MIN;
+
+            if (dedup.isDuplicate && matched && dedup.confidence >= threshold) {
+                console.log(`   🔗 Duplicate of ${matched.event_id} (confidence ${dedup.confidence}). Merging — ${dedup.reasoning}`);
+                await applyMerge({
+                    db,
+                    survivorEventId: matched.event_id, // keep the existing (older) row for stable links/RSVPs
+                    merged: dedup.merged,
+                    contributingPost: {
+                        postId,
+                        ownerUsername: post.ownerUsername,
+                        ownerFullName: post.ownerFullName,
+                        coauthorProducers: post.coauthorProducers,
+                        displayUrl: permanentImageUrl,
+                        postUrl: post.url,
+                        postTimestamp: post.timestamp,
+                    },
+                    absorbedEventId: null, // live flow: the incoming post was never inserted
+                });
+                console.log(`   ✅ Merged into event ${matched.event_id}`);
+            } else {
+                console.log("   💾 Inserting new event into Database...");
+                const insertResult = await insertEventToDatabase(eventData, postId, {
+                    ownerUsername: post.ownerUsername,
+                    ownerFullName: post.ownerFullName,
+                    coauthorProducers: post.coauthorProducers,
+                    displayUrl: permanentImageUrl, // ← Permanent Vercel Blob URL instead of expiring Apify URL
+                    caption: post.caption,
+                    postUrl: post.url,
+                    postTimestamp: post.timestamp,
+                });
+                console.log(`   ✅ Inserted! Event ID: ${insertResult.eventId}`);
+            }
         } catch (error) {
             console.error("   ❌ Pipeline Failed:", error.message);
             console.log("   ⏭️  Continuing to next post...");

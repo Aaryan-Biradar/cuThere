@@ -42,7 +42,7 @@ export function normalizeEventDate(postTimestamp, eventDateString) {
 }
 
 // The function now takes the dynamic AI data, the original post ID, and scraper metadata as parameters
-export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption, postUrl }) {
+export async function insertEventToDatabase(eventData, postId, { ownerUsername, ownerFullName, coauthorProducers, displayUrl, caption, postUrl, postTimestamp }) {
 
     console.log(`📥 Processing new event: ${eventData.eventName}...`);
 
@@ -63,18 +63,19 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
         // 2. Insert the core Event into the EVENT table (no org_id anymore)
         await db.execute({
             sql: `
-                INSERT INTO EVENT (event_id, event_title, event_description, event_date, event_time, event_location, displayUrl, postUrl) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO EVENT (event_id, event_title, event_description, event_date, event_time, event_location, displayUrl, postUrl, post_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             args: [
-                newEventId, 
-                eventData.eventName || 'Untitled Event', 
-                caption, 
-                eventData.date || 'Date TBA', 
-                eventData.time || 'Time TBA', 
-                eventData.location || 'Location TBA', 
+                newEventId,
+                eventData.eventName || 'Untitled Event',
+                caption,
+                eventData.date || 'Date TBA',
+                eventData.time || 'Time TBA',
+                eventData.location || 'Location TBA',
                 displayUrl,
-                postUrl || null
+                postUrl || null,
+                postTimestamp || null
             ]
         });
 
