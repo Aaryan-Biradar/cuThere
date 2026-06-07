@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { countRsvps } from '@/lib/events';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 // POST /api/rsvp
 export async function POST(request) {
@@ -45,6 +46,13 @@ export async function POST(request) {
     // Get updated RSVP count (real count, or 0 on error — never a fake default)
     const rsvp_count = await countRsvps(db, event_id);
 
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: user_name,
+      event: 'rsvp_added',
+      properties: { event_id, rsvp_count },
+    });
+
     return NextResponse.json({ message: 'RSVP created', rsvp_count }, { status: 201 });
   } catch (error) {
     console.error('RSVP error:', error);
@@ -69,6 +77,13 @@ export async function DELETE(request) {
 
     // Get updated RSVP count (real count, or 0 on error)
     const rsvp_count = await countRsvps(db, event_id);
+
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: user_name,
+      event: 'rsvp_removed',
+      properties: { event_id, rsvp_count },
+    });
 
     return NextResponse.json({ message: 'RSVP removed', rsvp_count }, { status: 200 });
   } catch (error) {

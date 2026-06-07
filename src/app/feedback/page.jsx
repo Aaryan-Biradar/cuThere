@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import posthog from 'posthog-js';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { ChevronLeftIcon } from '@/components/icons';
 
@@ -58,11 +59,13 @@ export default function FeedbackPage() {
 
       if (!res.ok) throw new Error('Failed to submit');
 
+      posthog.capture('feedback_submitted', { has_email: !!email.trim() });
       setStatus('success');
       setToastVisible(true);
       setEmail('');
       setFeedback('');
-    } catch {
+    } catch (err) {
+      posthog.captureException(err);
       setStatus('error');
     }
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import posthog from 'posthog-js';
 import EventSection from '@/components/EventSection';
 import Hero from '@/components/Hero';
 import SearchAndPills from '@/components/SearchAndPills';
@@ -33,8 +34,10 @@ export default function HomePage() {
       const res = await fetch(`/api/events/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       setSearchResults(data);
+      posthog.capture('event_searched', { query, result_count: data.length });
     } catch (err) {
       console.error(err);
+      posthog.captureException(err);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -43,6 +46,7 @@ export default function HomePage() {
 
   function handlePillClick(pill) {
     setActivePill(pill);
+    posthog.capture('category_filter_applied', { category: pill });
     const targetId = pill === 'All' ? 'events-anchor' : slugifySection(pill);
     document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
