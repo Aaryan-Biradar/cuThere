@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-    title: 'CUThere — Discover Local Events',
+    title: 'cuThere — Discover Local Events',
     description: 'Browse and RSVP to campus events instantly.',
     manifest: '/manifest.json',
     icons: {
