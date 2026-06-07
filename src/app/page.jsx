@@ -6,6 +6,9 @@ import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { parseEventDate } from '@/lib/eventDateUtils';
 
 const DEFAULT_TAG_PILLS = ['All'];
+// Tags pinned to the front of the list (right after the "This Week" section);
+// every other tag is ordered alphabetically.
+const PINNED_TAGS = ['Free Food'];
 const sideMargin = 'lg:px-37';
 
 function eventDateField(event) {
@@ -296,7 +299,11 @@ function HomePage() {
       (event.tags || []).forEach((tag) => tags.add(tag));
       if (event.category) tags.add(event.category);
     });
-    return Array.from(tags).sort((a, b) => a.localeCompare(b));
+    const rank = (tag) => {
+      const index = PINNED_TAGS.indexOf(tag);
+      return index === -1 ? PINNED_TAGS.length : index;
+    };
+    return Array.from(tags).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   }, [events]);
 
   const sections = useMemo(() => {
