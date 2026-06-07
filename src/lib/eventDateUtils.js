@@ -48,7 +48,7 @@ export function parseEventDate(dateString) {
  * Human-friendly date; empty if unparseable (caller may show “Date Unknown”).
  * @param {{ omitYearIfCurrent?: boolean }} [options] — Event cards omit the year when it matches this calendar year.
  */
-export function formatDisplayDate(dateString, options = {}) {
+function formatDisplayDate(dateString, options = {}) {
   const { omitYearIfCurrent = false } = options;
   if (!dateString) return '';
   const trimmed = String(dateString).trim();

@@ -1,7 +1,7 @@
 'use client';
 
 import EventCard from '@/components/EventCard';
-import { ChevronLeftIcon } from '@/components/icons';
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
 
 const sideMargin = 'lg:px-37';
 
@@ -41,9 +41,7 @@ export default function EventSection({ title, sectionId, events }) {
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#9CA3AF]"
             aria-label={`Scroll ${title} events right`}
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ChevronRightIcon />
           </button>
         </div>
       </div>

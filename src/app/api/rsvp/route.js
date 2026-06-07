@@ -35,7 +35,7 @@ export async function POST(request) {
     // Step 3: Insert RSVP
     await db.execute({
       sql: `
-        INSERT INTO RSVPs (student_id, event_id, rsvp_status) 
+        INSERT INTO RSVPs (student_id, event_id, rsvp_status)
         VALUES (?, ?, 'going')
         ON CONFLICT(student_id, event_id) DO UPDATE SET rsvp_status = 'going'
       `,
@@ -45,7 +45,7 @@ export async function POST(request) {
     // Get updated RSVP count (real count, or 0 on error — never a fake default)
     const rsvp_count = await countRsvps(db, event_id);
 
-    return NextResponse.json({ message: 'RSVP created', rsvp_count, is_demo: false }, { status: 201 });
+    return NextResponse.json({ message: 'RSVP created', rsvp_count }, { status: 201 });
   } catch (error) {
     console.error('RSVP error:', error);
     return NextResponse.json({ error: 'Failed to create RSVP' }, { status: 500 });
@@ -70,7 +70,7 @@ export async function DELETE(request) {
     // Get updated RSVP count (real count, or 0 on error)
     const rsvp_count = await countRsvps(db, event_id);
 
-    return NextResponse.json({ message: 'RSVP removed', rsvp_count, is_demo: false }, { status: 200 });
+    return NextResponse.json({ message: 'RSVP removed', rsvp_count }, { status: 200 });
   } catch (error) {
     console.error('RSVP delete error:', error);
     return NextResponse.json({ error: 'Failed to remove RSVP' }, { status: 500 });

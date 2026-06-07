@@ -7,9 +7,8 @@ import { EVENT_SELECT_BASE, mapEventRow, EVENTS_REVALIDATE_SECONDS } from '@/lib
 // the DB read below is what's cached, via unstable_cache + the 'events' tag.
 export const dynamic = 'force-dynamic';
 
-// Shared server cache: the DB is queried only on a cache miss. The result is held until the
-// 'events' tag is revalidated (the nightly scraper pings /api/revalidate); the 24h `revalidate`
-// is just a safety net.
+// Shared server cache: the DB is queried only on a cache miss, then the result is reused until
+// the `revalidate` window (EVENTS_REVALIDATE_SECONDS) elapses and the next request refreshes it.
 const getEvents = unstable_cache(
   async () => {
     const result = await db.execute({

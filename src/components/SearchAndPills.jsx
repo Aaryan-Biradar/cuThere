@@ -37,7 +37,6 @@ export default function SearchAndPills({
 
   return (
     <section id="events-anchor" className={`relative z-20 mx-auto max-w-7xl -mt-6 px-4 pb-8 sm:mt-0 sm:px-6 sm:pt-16 ${sideMargin}`}>
-      {/* Search bar target backend SQL */}
       <form onSubmit={onSearchSubmit} className="relative group">
         <svg
           className="absolute left-5 top-1/2 h-[20px] w-[20px] -translate-y-1/2 text-gray-400 group-focus-within:text-university-red transition-colors"
