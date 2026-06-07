@@ -7,11 +7,9 @@ import SearchAndPills from '@/components/SearchAndPills';
 import SearchResultsSection from '@/components/SearchResultsSection';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { slugifySection, useEvents } from '@/lib/useEvents';
-import { useScrolled } from '@/lib/useScrolled';
 
 export default function HomePage() {
   const { loading, sections, pillLabels } = useEvents();
-  const scrolled = useScrolled();
   const [activePill, setActivePill] = useState('All');
 
   // Search state
@@ -53,7 +51,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-brand-cream text-[#111827] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-      <SiteHeader scrolled={scrolled} />
+      <SiteHeader />
       <Hero />
       <SearchAndPills
         pills={pillLabels}
@@ -77,7 +75,7 @@ export default function HomePage() {
       ) : (
         <section id="events" className="mx-auto max-w-7xl pb-10">
           {sections.length === 0 ? (
-            <p className="px-4 py-10 text-sm text-[#6B7280] sm:px-6 lg:px-37">
+            <p className="px-4 py-10 text-sm text-[#6B7280] sm:px-6 lg:px-12">
               No upcoming events right now. Check back soon!
             </p>
           ) : (
