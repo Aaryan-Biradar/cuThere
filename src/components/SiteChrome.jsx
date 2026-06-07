@@ -27,7 +27,7 @@ function BrandLogo({ variant = 'header' }) {
   );
 }
 
-export function SiteHeader({ scrolled = false }) {
+export function SiteHeader({ scrolled = false, activeLabel = null }) {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
@@ -40,12 +40,21 @@ export function SiteHeader({ scrolled = false }) {
         <BrandLogo variant="header" />
 
         <div className="ml-auto flex items-center gap-2">
-          <a
-            href="/feedback"
-            className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
-          >
-            Feedback
-          </a>
+          {activeLabel ? (
+            <span
+              className="rounded-full border border-[#D71920] bg-white px-4 py-2 text-sm font-bold text-[#D71920]"
+              aria-current="page"
+            >
+              {activeLabel}
+            </span>
+          ) : (
+            <a
+              href="/feedback"
+              className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
+            >
+              Feedback
+            </a>
+          )}
         </div>
       </div>
     </header>
@@ -88,7 +97,7 @@ export function SiteFooter({ className = '' }) {
           </a>
         </div>
         <p className="font-sans text-[10px] font-medium tracking-widest text-[#9CA3AF]">
-          © {year} CUThere
+          © {year} cuThere
         </p>
       </div>
     </footer>
