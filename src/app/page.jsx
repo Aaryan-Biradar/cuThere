@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import EventCard from '@/components/EventCard';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { parseEventDate } from '@/lib/eventDateUtils';
+import { getCachedEvents, setCachedEvents } from '@/lib/eventsCache';
 
 const DEFAULT_TAG_PILLS = ['All'];
 // Tags pinned to the front of the list (right after the "This Week" section);
@@ -227,10 +228,11 @@ function EventSection({ title, sectionId, events }) {
 }
 
 function HomePage() {
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(() => getCachedEvents() ?? []);
   const [scrolled, setScrolled] = useState(false);
   const [activePill, setActivePill] = useState('All');
-  const [loading, setLoading] = useState(true);
+  // Only show the loading state on a cold cache; a warm cache renders instantly.
+  const [loading, setLoading] = useState(() => getCachedEvents() === null);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -273,11 +275,13 @@ function HomePage() {
             tags: event.tags || [event.category || event.source_platform || 'Academic'],
           }));
           setEvents(normalized);
-        } else {
+          setCachedEvents(normalized);
+        } else if (getCachedEvents() === null) {
           setEvents([]);
         }
       } catch (error) {
-        setEvents([]);
+        // Keep showing cached data if we have it; only clear on a cold cache.
+        if (getCachedEvents() === null) setEvents([]);
       } finally {
         setLoading(false);
       }

@@ -41,3 +41,11 @@ jobs:
           
           # Pass the GitHub run counter so Node knows whose turn it is
           RUN_NUMBER: ${{ github.run_number }}
+
+      - name: Refresh site cache
+        if: success()
+        run: |
+          curl -fsS -X POST "$SITE_URL/api/revalidate?secret=$REVALIDATE_SECRET" || echo "Revalidate ping failed (non-fatal)"
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
