@@ -100,7 +100,10 @@ export default function EventDetailPage() {
           if (!cached) setEvent(null);
         } else {
           setEvent(data);
-          setCachedEvent(id, data);
+          // Cache everything EXCEPT the live rsvp_count (we always refetch that fresh).
+          const cacheable = { ...data };
+          delete cacheable.rsvp_count;
+          setCachedEvent(id, cacheable);
         }
       } catch (error) {
         if (cancelled) return;
