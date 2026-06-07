@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { formatEventDateTime } from '@/lib/eventDateUtils';
+import { getCachedEvent, setCachedEvent } from '@/lib/eventsCache';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,
@@ -73,26 +74,37 @@ export default function EventDetailPage() {
   const params = useParams();
   const idValue = params?.id;
   const id = Array.isArray(idValue) ? idValue[0] : idValue;
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [event, setEvent] = useState(() => (id ? getCachedEvent(id) : null));
+  const [loading, setLoading] = useState(() => !(id && getCachedEvent(id)));
 
   useEffect(() => {
     if (!id) return undefined;
 
     let cancelled = false;
-
-    async function fetchEvent() {
+    const cached = getCachedEvent(id);
+    if (cached) {
+      // Warm cache → render instantly, then refresh in the background.
+      setEvent(cached);
+      setLoading(false);
+    } else {
       setLoading(true);
       setEvent(null);
+    }
 
+    async function fetchEvent() {
       try {
         const res = await fetch(`/api/events/${id}`);
         const data = await res.json();
         if (cancelled) return;
-        setEvent(data?.error ? null : data);
+        if (data?.error) {
+          if (!cached) setEvent(null);
+        } else {
+          setEvent(data);
+          setCachedEvent(id, data);
+        }
       } catch (error) {
         if (cancelled) return;
-        setEvent({ error: 'Unable to load event.' });
+        if (!cached) setEvent({ error: 'Unable to load event.' });
       } finally {
         if (!cancelled) setLoading(false);
       }

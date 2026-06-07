@@ -1,20 +1,24 @@
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import db from '@/lib/db';
 
-export async function GET(request, { params }) {
-  const { id } = await params;
+export const dynamic = 'force-dynamic';
 
-  try {
+// The event itself + its "related" list are once-a-night data → cached under the shared
+// 'events' tag (so one revalidation refreshes the list and every detail page). RSVP count is
+// fetched live below, since it changes as users RSVP.
+const getEventCore = unstable_cache(
+  async (id) => {
     // 1. Fetch the specific event
     const eventResult = await db.execute({
       sql: `
-        SELECT 
-          e.event_id AS id, 
-          e.event_title AS title, 
-          e.event_description AS description, 
-          e.event_date AS date, 
+        SELECT
+          e.event_id AS id,
+          e.event_title AS title,
+          e.event_description AS description,
+          e.event_date AS date,
           e.event_date AS event_date,
-          e.event_time AS time, 
+          e.event_time AS time,
           e.event_location AS location,
           e.displayUrl AS displayUrl,
           e.postUrl AS postUrl,
@@ -31,25 +35,15 @@ export async function GET(request, { params }) {
       args: [id]
     });
     const eventRaw = eventResult.rows[0];
+    if (!eventRaw) return null;
 
-    if (!eventRaw) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-    }
-
-    // Map tags and hosts
     let tagsArray = [];
     if (eventRaw.tags) {
-      try {
-        const parsed = JSON.parse(eventRaw.tags);
-        tagsArray = parsed.filter(Boolean);
-      } catch (e) {}
+      try { tagsArray = JSON.parse(eventRaw.tags).filter(Boolean); } catch (e) {}
     }
     let hostsArray = [];
     if (eventRaw.hosts) {
-      try {
-        const parsed = JSON.parse(eventRaw.hosts);
-        hostsArray = parsed.filter(Boolean);
-      } catch (e) {}
+      try { hostsArray = JSON.parse(eventRaw.hosts).filter(Boolean); } catch (e) {}
     }
     const normalizedDate = eventRaw.date || eventRaw.event_date || '';
     const event = {
@@ -64,12 +58,12 @@ export async function GET(request, { params }) {
     // 2. Fetch related events (same date OR location), excluding the current event
     const relatedResult = await db.execute({
       sql: `
-        SELECT 
-          e.event_id AS id, 
-          e.event_title AS title, 
-          e.event_description AS description, 
-          e.event_date AS date, 
-          e.event_time AS time, 
+        SELECT
+          e.event_id AS id,
+          e.event_title AS title,
+          e.event_description AS description,
+          e.event_date AS date,
+          e.event_time AS time,
           e.event_location AS location,
           e.displayUrl AS displayUrl,
           e.postUrl AS postUrl,
@@ -86,9 +80,8 @@ export async function GET(request, { params }) {
       `,
       args: [id, event.date, event.location]
     });
-    const relatedRaw = relatedResult.rows;
 
-    const related = relatedRaw.map(evt => {
+    const related = relatedResult.rows.map(evt => {
       let tArray = [];
       if (evt.tags) {
         try { tArray = JSON.parse(evt.tags).filter(Boolean); } catch (e) {}
@@ -105,25 +98,38 @@ export async function GET(request, { params }) {
       };
     });
 
-    // 3. Fetch RSVP count
-    // NOTE: This assumes an RSVP table exists where student_id is logged.
-    // If it doesn't exist, we fallback to 0.
+    return { event, related };
+  },
+  ['event-core'],
+  { tags: ['events'], revalidate: 86400 }
+);
+
+export async function GET(_request, { params }) {
+  const { id } = await params;
+
+  try {
+    const core = await getEventCore(id); // cached (event + related)
+
+    if (!core) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    // 3. RSVP count — kept LIVE (changes as users RSVP, so it isn't cached with the event)
     let rsvp_count = 0;
     try {
       const rsvpResult = await db.execute({
         sql: `SELECT count(*) as count FROM RSVPs WHERE event_id = ?`,
         args: [id]
       });
-      const rsvpCountRow = rsvpResult.rows[0];
-      rsvp_count = rsvpCountRow ? rsvpCountRow.count : 0;
+      rsvp_count = rsvpResult.rows[0]?.count ?? 0;
     } catch (err) {
       // Table might not be fully migrated or querying issues
     }
 
     return NextResponse.json({
-      ...event,
+      ...core.event,
       rsvp_count,
-      related,
+      related: core.related,
       is_demo: false,
     });
   } catch (error) {

@@ -1,20 +1,24 @@
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import db from '@/lib/db';
 
+// Keep the route dynamic (runs per request, no build-time static generation / build-time DB call);
+// the DB read below is what's cached, via unstable_cache + the 'events' tag.
 export const dynamic = 'force-dynamic';
 
-// GET /api/events
-export async function GET() {
-  try {
-    // Use json_group_array to aggregate tag names and hosts
+// Shared server cache: the DB is queried only on a cache miss. The result is held until the
+// 'events' tag is revalidated (the nightly scraper pings /api/revalidate); the 24h `revalidate`
+// is just a safety net.
+const getEvents = unstable_cache(
+  async () => {
     const result = await db.execute({
       sql: `
-        SELECT 
-          e.event_id AS id, 
-          e.event_title AS title, 
-          e.event_description AS description, 
+        SELECT
+          e.event_id AS id,
+          e.event_title AS title,
+          e.event_description AS description,
           e.event_date AS event_date,
-          e.event_time AS time, 
+          e.event_time AS time,
           e.event_location AS location,
           e.displayUrl AS displayUrl,
           e.postUrl AS postUrl,
@@ -29,23 +33,16 @@ export async function GET() {
       `,
       args: []
     });
-    const events = result.rows;
 
     // Map the stringified tag and host arrays to JS arrays properly
-    const mappedEvents = events.map(evt => {
+    return result.rows.map(evt => {
       let tagsArray = [];
       if (evt.tags) {
-         try {
-           const parsed = JSON.parse(evt.tags);
-           tagsArray = parsed.filter(Boolean); // Filter out [null]
-         } catch(e) { /* ignore parse errors */ }
+        try { tagsArray = JSON.parse(evt.tags).filter(Boolean); } catch (e) { /* ignore parse errors */ }
       }
       let hostsArray = [];
       if (evt.hosts) {
-         try {
-           const parsed = JSON.parse(evt.hosts);
-           hostsArray = parsed.filter(Boolean); // Filter out [null]
-         } catch(e) { /* ignore parse errors */ }
+        try { hostsArray = JSON.parse(evt.hosts).filter(Boolean); } catch (e) { /* ignore parse errors */ }
       }
       const normalizedDate = evt.date || evt.event_date || '';
       return {
@@ -57,7 +54,15 @@ export async function GET() {
         category: tagsArray.length > 0 ? tagsArray[0] : 'Uncategorized'
       };
     });
+  },
+  ['events-all'],
+  { tags: ['events'], revalidate: 86400 }
+);
 
+// GET /api/events
+export async function GET() {
+  try {
+    const mappedEvents = await getEvents();
     return NextResponse.json(mappedEvents);
   } catch (error) {
     console.error('Error fetching events from DB:', error);
