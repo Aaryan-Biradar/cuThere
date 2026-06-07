@@ -4,26 +4,8 @@ import { isEvent, analyzeFlyer, findDuplicateAndMerge } from './ai.js';
 import { insertEventToDatabase, normalizeEventDate } from './eventInsert.js';
 import { findCandidates, SAME_ACCOUNT_CONFIRM_MIN, CROSS_ACCOUNT_CONFIRM_MIN } from './dedup.js';
 import { applyMerge } from './eventMerge.js';
+import { wait, withRetry } from './retry.js';
 import db from './db.js';
-
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function executeWithRetry(operation, maxRetries = 3, delayMs = 4000) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            return await operation();
-        } catch (error) {
-            const isOverloaded = error?.message?.includes('503') || error?.message?.includes('429') || error?.message?.includes('UNAVAILABLE');
-            if (isOverloaded && attempt < maxRetries) {
-                console.log(`   ⏳ Gemini API overloaded. Waiting ${~~(delayMs / 1000)}s before retry ${attempt}/${maxRetries}...`);
-                await wait(delayMs);
-                delayMs *= 1.5; // Exponential backoff
-            } else {
-                throw error;
-            }
-        }
-    }
-}
 
 async function runPipeline() {
     console.log("=== 🚀 CuThere Pipeline Starting ===\n");
@@ -73,7 +55,7 @@ async function runPipeline() {
 
         // STEP 3: Filter — ask Gemini if this is actually an event
         console.log("   🔍 Checking if post is an event...");
-        const eventCheck = await executeWithRetry(() => isEvent(imageBuffer, post.caption));
+        const eventCheck = await withRetry(() => isEvent(imageBuffer, post.caption));
 
         if (!eventCheck) {
             console.log(`   ⏭️  Not an event. Saving ID to ignore list to save AI tokens on next run.`);
@@ -87,7 +69,7 @@ async function runPipeline() {
 
         // STEP 4: Send the image + caption to Gemini for full analysis
         console.log("   🤖 Analyzing with Gemini AI...");
-        const eventData = await executeWithRetry(() => analyzeFlyer(imageBuffer, post.caption));
+        const eventData = await withRetry(() => analyzeFlyer(imageBuffer, post.caption));
         console.log("   Parsed event data:", eventData);
 
         // STEP 4.5: Normalize the event date into a sortable YYYY-MM-DD format
@@ -125,7 +107,7 @@ async function runPipeline() {
             let dedup = { isDuplicate: false };
             if (candidates.length > 0) {
                 console.log(`   🔎 ${candidates.length} possible duplicate(s) — confirming with Gemini...`);
-                dedup = await executeWithRetry(() => findDuplicateAndMerge({
+                dedup = await withRetry(() => findDuplicateAndMerge({
                     // Use the raw caption as the description so it's comparable to candidates'
                     // stored event_description (also the caption).
                     incoming: { ...eventData, description: post.caption, hosts: hostUsernames, post_timestamp: post.timestamp },

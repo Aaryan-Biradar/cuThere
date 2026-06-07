@@ -39,11 +39,13 @@ async function buildDatabase() {
             event_id TEXT PRIMARY KEY,
             event_title TEXT NOT NULL,
             event_description TEXT,
-            event_date TEXT NOT NULL, 
+            event_date TEXT NOT NULL,
             event_time TEXT NOT NULL,
             event_location TEXT NOT NULL,
             displayUrl TEXT,
-            postUrl TEXT
+            postUrl TEXT,
+            post_timestamp TEXT,
+            updated_at TEXT
         );`,
         `CREATE TABLE HOSTS (
             event_id TEXT,

@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { formatEventDateTime } from '@/lib/eventDateUtils';
+import { ChevronLeftIcon } from '@/components/icons';
+import { formatEventDateTime, parseEventDate } from '@/lib/eventDateUtils';
 import { getCachedEvent, setCachedEvent } from '@/lib/eventsCache';
+import { DEFAULT_EVENT_IMAGE, UNTITLED_EVENT } from '@/lib/copy';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,
@@ -15,7 +17,7 @@ const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
       disabled
       className="flex w-full shrink-0 cursor-wait items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-bold text-[#111827] shadow-sm sm:py-3 box-border"
     >
-      
+      Add to Calendar
     </button>
   ),
 });
@@ -42,30 +44,16 @@ function to24Hour(timeStr) {
 }
 
 /**
- * Given a start time in HH:mm, returns an end time ~1.5 hours later.
+ * Given a start time in HH:mm, returns an end time 90 minutes (1.5 hours) later,
+ * wrapping past midnight. e.g. "23:30" -> "01:00".
  */
 function estimateEndTime(startTime24) {
   if (!startTime24) return null;
   const [h, m] = startTime24.split(':').map(Number);
-  const endH = Math.min(h + 1, 23);
-  const endM = m + 30 >= 60 ? m + 30 - 60 : m + 30;
-  const endHour = m + 30 >= 60 ? Math.min(endH + 1, 23) : endH;
-  return `${String(endHour).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
-}
-
-/** Same chevron as home page carousel “scroll left” control */
-function BackChevronIcon({ className = 'h-4 w-4' }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M15 6l-6 6 6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  const end = (h * 60 + m + 90) % (24 * 60);
+  const endHour = Math.floor(end / 60);
+  const endMin = end % 60;
+  return `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
 }
 
 const DEFAULT_DOCUMENT_TITLE = 'cuThere — Discover Local Events';
@@ -125,7 +113,7 @@ export default function EventDetailPage() {
       document.title = DEFAULT_DOCUMENT_TITLE;
       return undefined;
     }
-    const label = event.title?.trim() || 'Untitled Event';
+    const label = event.title?.trim() || UNTITLED_EVENT;
     document.title = `${label} — cuThere`;
     return () => {
       document.title = DEFAULT_DOCUMENT_TITLE;
@@ -133,7 +121,7 @@ export default function EventDetailPage() {
   }, [event]);
 
   const shell = (children, { hideFooterOnMobile } = {}) => (
-    <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
+    <div className="flex min-h-screen flex-col bg-brand-cream text-[#111827] [font-family:var(--font-brand-sans)]">
       <SiteHeader scrolled />
       <div className="flex min-h-0 flex-1 flex-col pt-[calc(env(safe-area-inset-top)+3.5rem)] sm:pt-[calc(env(safe-area-inset-top)+4rem)]">
         {children}
@@ -171,7 +159,7 @@ export default function EventDetailPage() {
           href="/"
           className="inline-flex w-fit items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-[#111827] transition hover:border-gray-300"
         >
-          <BackChevronIcon />
+          <ChevronLeftIcon />
           Back
         </a>
         <p className="mt-8 text-base font-medium text-slate-600">Event not found.</p>
@@ -180,20 +168,27 @@ export default function EventDetailPage() {
     );
   }
 
-  const imageSrc = event.displayUrl || '/heroimage.png';
+  const imageSrc = event.displayUrl || DEFAULT_EVENT_IMAGE;
 
   const startTime24 = to24Hour(event.time);
   const endTime24 = estimateEndTime(startTime24);
   const calendarDate = event.date || event.event_date || '';
-  
-  let parsedDateStr = calendarDate;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(calendarDate) && calendarDate) {
-    const d = new Date(`${calendarDate}, ${new Date().getFullYear()}`);
-    if (!isNaN(d.getTime())) {
-      parsedDateStr = d.toISOString().split('T')[0];
+
+  // Normalize whatever date format we have into YYYY-MM-DD for the calendar button,
+  // reusing the shared parser (handles ISO, "Month Day", ordinals, academic-year pivot).
+  let parsedDateStr = '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(calendarDate)) {
+    parsedDateStr = calendarDate;
+  } else {
+    const parsed = parseEventDate(calendarDate);
+    if (parsed) {
+      const y = parsed.getFullYear();
+      const mo = String(parsed.getMonth() + 1).padStart(2, '0');
+      const d = String(parsed.getDate()).padStart(2, '0');
+      parsedDateStr = `${y}-${mo}-${d}`;
     }
   }
-  
+
   // Only pass times if we have a valid YYYY-MM-DD date and a parseable time
   const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(parsedDateStr);
 
@@ -201,7 +196,7 @@ export default function EventDetailPage() {
     <div className="flex w-full min-w-0 flex-row flex-nowrap gap-2 sm:gap-3">
       <div className="flex min-w-0 flex-1 [&>add-to-calendar-button]:w-full [&>div]:w-full">
         <CalendarButton
-          name={event.title || 'Untitled Event'}
+          name={event.title || UNTITLED_EVENT}
           options={['Apple', 'Google', 'Outlook.com']}
           location={event.location || ''}
           {...(hasValidDate ? { startDate: parsedDateStr } : {})}
@@ -234,7 +229,7 @@ export default function EventDetailPage() {
           href="/"
           className="mb-4 inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827] lg:hidden"
         >
-          <BackChevronIcon />
+          <ChevronLeftIcon />
           Back
         </a>
 
@@ -254,17 +249,17 @@ export default function EventDetailPage() {
           href="/"
           className="mb-8 hidden w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827] lg:inline-flex"
         >
-          <BackChevronIcon />
+          <ChevronLeftIcon />
           Back
         </a>
 
         <div className="space-y-3 sm:space-y-4 lg:space-y-4">
           <h1 className="font-sans text-3xl font-black leading-tight tracking-tight text-[#111827] sm:text-4xl lg:text-5xl">
-            {event.title || 'Untitled Event'}
+            {event.title || UNTITLED_EVENT}
           </h1>
 
           <div className="flex flex-col gap-1">
-            <p className="font-sans text-lg font-bold text-[#D71920] sm:text-xl">
+            <p className="font-sans text-lg font-bold text-university-red sm:text-xl">
               {formatEventDateTime(event.date || event.event_date, event.time)}
             </p>
             {event.location && (

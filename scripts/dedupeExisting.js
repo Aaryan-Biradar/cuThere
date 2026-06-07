@@ -8,6 +8,7 @@ import {
     SAME_ACCOUNT_CONFIRM_MIN,
     CROSS_ACCOUNT_CONFIRM_MIN,
 } from '../src/lib/dedup.js';
+import { wait, withRetry } from '../src/lib/retry.js';
 
 /**
  * ONE-TIME backfill: find & merge duplicate events ALREADY in the DB.
@@ -34,23 +35,8 @@ const SAME_EDGE_TITLE_MIN = 0.55;
 const CROSS_EDGE_TITLE_MIN = 0.80;
 const CROSS_EDGE_LOC_MIN = 0.80;
 
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-
-async function withRetry(op, maxRetries = 3, delayMs = 4000) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            return await op();
-        } catch (e) {
-            const overloaded = e?.message?.includes('503') || e?.message?.includes('UNAVAILABLE'); // not 429 — a quota cap won't recover by retrying
-            if (overloaded && attempt < maxRetries) {
-                await wait(delayMs);
-                delayMs *= 1.5;
-            } else {
-                throw e;
-            }
-        }
-    }
-}
+// Retry only transient overloads — NOT 429: a quota cap won't recover by retrying.
+const isRetryableOverload = (e) => /503|UNAVAILABLE/.test(e?.message || '');
 
 // --- recency helpers (legacy rows have post_timestamp = NULL → treated as oldest) ---
 
@@ -227,7 +213,7 @@ async function confirmCluster(cluster) {
     let state = {
         eventName: survivor.event_title, date: survivor.event_date, time: survivor.event_time,
         location: survivor.event_location, description: survivor.event_description,
-        tags: [...survivor.tags], hasFreeFood: survivor.tags.includes('Free Food'),
+        tags: [...survivor.tags],
     };
     let hostUnion = new Set(survivor.hosts);
     let survivorTs = survivor.post_timestamp;
@@ -249,7 +235,10 @@ async function confirmCluster(cluster) {
 
         let result = null;
         try {
-            result = await withRetry(() => findDuplicateAndMerge({ incoming: asIncoming(member), candidates: [candidate] }), 5, 5000);
+            result = await withRetry(
+                () => findDuplicateAndMerge({ incoming: asIncoming(member), candidates: [candidate] }),
+                { maxRetries: 5, delayMs: 5000, isRetryable: isRetryableOverload },
+            );
         } catch (e) {
             const msg = e?.message || String(e);
             // An expired/invalid key (or other auth/400) fails EVERY call — abort loudly.

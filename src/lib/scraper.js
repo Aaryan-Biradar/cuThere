@@ -2,13 +2,13 @@ import { ApifyClient } from 'apify-client';
 import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 
-// 1. Group the keys into an array
-const apifyKeys = [
-    process.env.APIFY_API_TOKEN_1,
-    process.env.APIFY_API_TOKEN_2,
-    process.env.APIFY_API_TOKEN_3,
-    process.env.APIFY_API_TOKEN_4
-].filter(Boolean); // This ensures it doesn't crash if you temporarily only have 2 keys
+// 1. Collect every APIFY_API_TOKEN_<n> from the env, in numeric order, so adding/removing
+// a key is just an env change (no code edit). Same rotation behavior as before.
+const apifyKeys = Object.keys(process.env)
+    .filter((k) => /^APIFY_API_TOKEN_\d+$/.test(k))
+    .sort((a, b) => Number(a.match(/\d+$/)[0]) - Number(b.match(/\d+$/)[0]))
+    .map((k) => process.env[k])
+    .filter(Boolean);
 
 // We'll initialize the client and handle the runNumber logic dynamically inside scrapeLatestPost
 // so we can loop over the keys if one of them fails.
@@ -27,7 +27,7 @@ const input = {
 };
 
 export async function scrapeLatestPost() {
-    const actorId = "nH2AHrwxeTRJoN5hX";
+    const actorId = process.env.APIFY_ACTOR_ID || "nH2AHrwxeTRJoN5hX";
     
     // Grab the GitHub run number, defaults to 0
     const runNumber = parseInt(process.env.RUN_NUMBER || "0", 10);

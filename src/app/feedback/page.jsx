@@ -2,21 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-
-/** Same chevron as event page / home carousel "back" control */
-function BackChevronIcon({ className = 'h-4 w-4' }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M15 6l-6 6 6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+import { ChevronLeftIcon } from '@/components/icons';
+import { useScrolled } from '@/lib/useScrolled';
 
 /** Toast notification that auto-dismisses */
 function Toast({ message, visible, onClose }) {
@@ -47,18 +34,11 @@ function Toast({ message, visible, onClose }) {
 }
 
 export default function FeedbackPage() {
-  const [scrolled, setScrolled] = useState(false);
+  const scrolled = useScrolled();
   const [email, setEmail] = useState('');
   const [feedback, setFeedback] = useState('');
   const [status, setStatus] = useState('idle'); // idle | submitting | success | error
   const [toastVisible, setToastVisible] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -92,7 +72,7 @@ export default function FeedbackPage() {
   const isSuccess = status === 'success';
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FCFAF7] text-[#111827] [font-family:var(--font-brand-sans)]">
+    <div className="flex min-h-screen flex-col bg-brand-cream text-[#111827] [font-family:var(--font-brand-sans)]">
       <SiteHeader scrolled={scrolled} activeLabel="Feedback" />
 
       <main className="flex flex-1 flex-col px-4 pb-12 pt-[calc(env(safe-area-inset-top)+4.5rem)] sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+5rem)] lg:px-12">
@@ -101,7 +81,7 @@ export default function FeedbackPage() {
             href="/"
             className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827]"
           >
-            <BackChevronIcon />
+            <ChevronLeftIcon />
             Back
           </a>
           <h1 className="mt-4 font-sans text-3xl font-black tracking-tight text-[#111827] sm:text-4xl">
@@ -126,13 +106,13 @@ export default function FeedbackPage() {
                   href="/"
                   className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827]"
                 >
-                  <BackChevronIcon />
+                  <ChevronLeftIcon />
                   Back to events
                 </a>
                 <button
                   type="button"
                   onClick={() => setStatus('idle')}
-                  className="text-sm font-semibold text-[#D71920] transition hover:text-[#b81419]"
+                  className="text-sm font-semibold text-university-red transition hover:text-university-red-hover"
                 >
                   Send more feedback
                 </button>
@@ -174,7 +154,7 @@ export default function FeedbackPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-[#FCFAF7] px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-2 focus:ring-[#D71920]/20"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-brand-cream px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-university-red focus:outline-none focus:ring-2 focus:ring-university-red/20"
                 />
               </div>
 
@@ -191,7 +171,7 @@ export default function FeedbackPage() {
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="What would you like us to know?"
-                  className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-[#FCFAF7] px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-[#D71920] focus:outline-none focus:ring-2 focus:ring-[#D71920]/20"
+                  className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-brand-cream px-4 py-3 text-base text-[#111827] placeholder:text-gray-400 focus:border-university-red focus:outline-none focus:ring-2 focus:ring-university-red/20"
                 />
               </div>
 
@@ -206,7 +186,7 @@ export default function FeedbackPage() {
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full rounded-xl border border-[#D71920] bg-[#D71920] py-3.5 text-sm font-bold text-white shadow-sm transition hover:border-[#b81419] hover:bg-[#b81419] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[200px] sm:px-10"
+                className="w-full rounded-xl border border-university-red bg-university-red py-3.5 text-sm font-bold text-white shadow-sm transition hover:border-university-red-hover hover:bg-university-red-hover disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[200px] sm:px-10"
               >
                 {status === 'submitting' ? (
                   <span className="inline-flex items-center gap-2">

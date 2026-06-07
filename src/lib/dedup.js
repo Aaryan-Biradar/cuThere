@@ -1,4 +1,5 @@
 import db from './db.js';
+import { isPlaceholder } from './placeholders.js';
 
 /**
  * Duplicate-event candidate prefilter + dependency-free string similarity.
@@ -20,15 +21,12 @@ const CROSS_ACCOUNT_LOCATION_MIN = 0.60;
 const MAX_CANDIDATES_PER_PATH = 5;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const PLACEHOLDERS = new Set(['', 'tba', 'date tba', 'time tba', 'location tba', 'untitled event', 'n/a']);
 const STOPWORDS = new Set(['the', 'a', 'an', 'and', 'of', 'at', 'in', 'on', 'for', 'to', 'event', 'carleton', 'cu', 'university']);
 
-export function isPlaceholder(value) {
-    if (value == null) return true;
-    return PLACEHOLDERS.has(String(value).trim().toLowerCase());
-}
+// Re-export so existing dedup consumers keep importing isPlaceholder from here.
+export { isPlaceholder };
 
-export function normalizeStr(value) {
+function normalizeStr(value) {
     if (value == null) return '';
     return String(value)
         .toLowerCase()
@@ -43,7 +41,7 @@ function tokens(value) {
         .filter((t) => t && !STOPWORDS.has(t));
 }
 
-export function tokenJaccard(a, b) {
+function tokenJaccard(a, b) {
     const sa = new Set(tokens(a));
     const sb = new Set(tokens(b));
     if (sa.size === 0 || sb.size === 0) return 0;
@@ -53,7 +51,7 @@ export function tokenJaccard(a, b) {
     return union === 0 ? 0 : inter / union;
 }
 
-export function levenshteinRatio(a, b) {
+function levenshteinRatio(a, b) {
     const s = normalizeStr(a);
     const t = normalizeStr(b);
     if (!s || !t) return 0;

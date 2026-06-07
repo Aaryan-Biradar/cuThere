@@ -42,7 +42,7 @@ export function SiteHeader({ scrolled = false, activeLabel = null }) {
         <div className="ml-auto flex items-center gap-2">
           {activeLabel ? (
             <span
-              className="rounded-full border border-[#D71920] bg-white px-4 py-2 text-sm font-bold text-[#D71920]"
+              className="rounded-full border border-university-red bg-white px-4 py-2 text-sm font-bold text-university-red"
               aria-current="page"
             >
               {activeLabel}
@@ -50,7 +50,7 @@ export function SiteHeader({ scrolled = false, activeLabel = null }) {
           ) : (
             <a
               href="/feedback"
-              className="rounded-full border border-[#D71920] bg-[#D71920] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#b81419] hover:border-[#b81419]"
+              className="rounded-full border border-university-red bg-university-red px-4 py-2 text-sm font-bold text-white transition hover:bg-university-red-hover hover:border-university-red-hover"
             >
               Feedback
             </a>
@@ -71,7 +71,7 @@ export function SiteFooter({ className = '' }) {
 
   return (
     <footer
-      className={`border-t border-[#E5E7EB] bg-[#FCFAF7] px-4 py-3 sm:px-6 lg:px-12 ${className}`}
+      className={`border-t border-[#E5E7EB] bg-brand-cream px-4 py-3 sm:px-6 lg:px-12 ${className}`}
     >
       <div className="mx-auto flex h-10 max-w-7xl items-center justify-between gap-4">
         <div className="flex min-h-10 items-center gap-3">

@@ -1,4 +1,5 @@
 import defaultDb from './db.js';
+import { isReal } from './placeholders.js';
 
 /**
  * Merge a confirmed-duplicate post into a surviving EVENT row.
@@ -10,12 +11,6 @@ import defaultDb from './db.js';
  * The survivor's event_id is preserved (stable /events/[id] permalinks + RSVPs); only its
  * column *values* are refreshed with the most complete + most current info.
  */
-
-const PLACEHOLDERS = new Set(['', 'tba', 'date tba', 'time tba', 'location tba', 'untitled event', 'n/a']);
-
-export function isReal(value) {
-    return value != null && !PLACEHOLDERS.has(String(value).trim().toLowerCase());
-}
 
 // HARD GUARDRAIL: a real value is NEVER replaced by an empty/placeholder one,
 // regardless of what Gemini proposed.
@@ -52,7 +47,7 @@ function isNewer(a, b) {
  * @param {object}  args
  * @param {object}  [args.db]               libsql client (defaults to the shared one)
  * @param {string}  args.survivorEventId    the row to keep
- * @param {object}  args.merged             Gemini's merged fields { eventName, date, time, location, description, tags[], hasFreeFood }
+ * @param {object}  args.merged             Gemini's merged fields { eventName, date, time, location, description, tags[] }
  * @param {object}  args.contributingPost   { postId, ownerUsername, ownerFullName, coauthorProducers[], displayUrl, postUrl, postTimestamp }
  * @param {string|null} [args.absorbedEventId]  existing duplicate row to delete (backfill only)
  * @returns {Promise<{ success: boolean, survivorEventId: string }>}

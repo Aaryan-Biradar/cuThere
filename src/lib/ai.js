@@ -6,6 +6,9 @@ import db from './db.js';
 // Initialize the AI with your API key
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// Gemini model name — overridable via env so we don't have to edit code to bump it.
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
 // Load the Carleton building-code map once at module level (ESM-safe fs read)
 const buildingMap = JSON.parse(
     readFileSync(new URL('../../config/buildings.json', import.meta.url), 'utf8')
@@ -35,7 +38,7 @@ export async function isEvent(imageBuffer, caption) {
     const base64Image = Buffer.from(imageBuffer).toString("base64");
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: MODEL,
         contents: [
             `Instructions: Look at this image and caption. Is this promoting a specific event (with a date, time, and location)? at least 2/3 of these must be present. Respond with ONLY "yes" or "no", nothing else.`,
             `Caption: ${caption}`,
@@ -91,7 +94,7 @@ ${buildingMapLines}
 
     // 3. We send the prompt, the caption, and the image part to Gemini
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: MODEL,
         contents: [
             `Instructions: ${prompt}`,
             `Event Caption: ${caption}`,
@@ -120,7 +123,7 @@ function truncate(value, max = 700) {
  * Decides whether an INCOMING analyzed event duplicates one of the prefiltered CANDIDATE
  * events, and if so returns the best merged version. Text-only (no images).
  *
- * @param {object}   incoming    { eventName, date, time, location, description, tags[], hasFreeFood, hosts[], post_timestamp }
+ * @param {object}   incoming    { eventName, date, time, location, description, tags[], hosts[], post_timestamp }
  * @param {object[]} candidates  existing events with { event_id, event_title, event_date, event_time,
  *                               event_location, event_description, tags[], hosts[], post_timestamp, path:'same'|'cross' }
  * @returns {Promise<{ isDuplicate:boolean, matchedEventId:string|null, confidence:number,
@@ -135,7 +138,6 @@ export async function findDuplicateAndMerge({ incoming, candidates }) {
         location: incoming?.location ?? incoming?.event_location ?? '',
         description: truncate(incoming?.description ?? incoming?.event_description ?? ''),
         tags: incoming?.tags ?? [],
-        hasFreeFood: incoming?.hasFreeFood ?? false,
         hosts: incoming?.hosts ?? [],
         post_timestamp: incoming?.post_timestamp ?? null,
     };
@@ -148,7 +150,6 @@ export async function findDuplicateAndMerge({ incoming, candidates }) {
         location: c.event_location,
         description: truncate(c.event_description),
         tags: c.tags ?? [],
-        hasFreeFood: (c.tags ?? []).includes('Free Food'),
         hosts: c.hosts ?? [],
         post_timestamp: c.post_timestamp ?? null,
         matchType: c.path === 'cross' ? 'cross-account' : 'same-account',
@@ -196,16 +197,15 @@ export async function findDuplicateAndMerge({ incoming, candidates }) {
             "time": "...",
             "location": "...",
             "description": "...",
-            "tags": ["..."],
-            "hasFreeFood": true
+            "tags": ["..."]
           },
           "reasoning": "one short sentence"
         }
-        If it is NOT a duplicate, set "isDuplicate" false, "matchedEventId" null, and "merged" null.
+        If it is NOT a duplicate, set "isDuplicate" false, "matchedRef" null, and "merged" null.
     `;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: MODEL,
         contents: [prompt],
     });
 
@@ -223,7 +223,7 @@ export async function findDuplicateAndMerge({ incoming, candidates }) {
     return {
         isDuplicate: Boolean(parsed.isDuplicate) && matchedEventId !== null,
         matchedEventId,
-        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : Number(parsed.confidence) || 0,
+        confidence: Number(parsed.confidence) || 0,
         merged: matchedEventId ? (parsed.merged ?? null) : null,
         reasoning: parsed.reasoning ?? '',
     };
