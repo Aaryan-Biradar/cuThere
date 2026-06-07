@@ -3,7 +3,7 @@
 import EventCard from '@/components/EventCard';
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
 
-const sideMargin = 'lg:px-37';
+const sideMargin = 'lg:px-12';
 
 export default function EventSection({ title, sectionId, events }) {
   const carouselId = `${sectionId}-carousel`;

@@ -27,14 +27,10 @@ function BrandLogo({ variant = 'header' }) {
   );
 }
 
-export function SiteHeader({ scrolled = false, activeLabel = null }) {
+export function SiteHeader({ activeLabel = null }) {
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)] transition-colors duration-300 ease-out ${
-        scrolled
-          ? 'border-b border-gray-100 bg-white shadow-md'
-          : 'bg-transparent'
-      }`}
+      className="fixed inset-x-0 top-0 z-50 border-b border-gray-100 bg-white pt-[env(safe-area-inset-top)] shadow-md"
     >
       <div className="flex min-h-14 items-center justify-between px-4 sm:min-h-16 sm:px-6 lg:px-12">
         <BrandLogo variant="header" />

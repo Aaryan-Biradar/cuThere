@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { ChevronLeftIcon } from '@/components/icons';
-import { useScrolled } from '@/lib/useScrolled';
 
 /** Toast notification that auto-dismisses */
 function Toast({ message, visible, onClose }) {
@@ -34,7 +33,6 @@ function Toast({ message, visible, onClose }) {
 }
 
 export default function FeedbackPage() {
-  const scrolled = useScrolled();
   const [email, setEmail] = useState('');
   const [feedback, setFeedback] = useState('');
   const [status, setStatus] = useState('idle'); // idle | submitting | success | error
@@ -73,7 +71,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-cream text-[#111827] [font-family:var(--font-brand-sans)]">
-      <SiteHeader scrolled={scrolled} activeLabel="Feedback" />
+      <SiteHeader activeLabel="Feedback" />
 
       <main className="flex flex-1 flex-col px-4 pb-12 pt-[calc(env(safe-area-inset-top)+4.5rem)] sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+5rem)] lg:px-12">
         <div className="mx-auto w-full max-w-lg">

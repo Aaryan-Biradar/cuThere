@@ -122,7 +122,7 @@ export default function EventDetailPage() {
 
   const shell = (children, { hideFooterOnMobile } = {}) => (
     <div className="flex min-h-screen flex-col bg-brand-cream text-[#111827] [font-family:var(--font-brand-sans)]">
-      <SiteHeader scrolled />
+      <SiteHeader />
       <div className="flex min-h-0 flex-1 flex-col pt-[calc(env(safe-area-inset-top)+3.5rem)] sm:pt-[calc(env(safe-area-inset-top)+4rem)]">
         {children}
       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const sideMargin = 'lg:px-37';
+const sideMargin = 'lg:px-12';
 
 export default function SearchAndPills({
   pills,

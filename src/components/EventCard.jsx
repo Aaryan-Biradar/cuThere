@@ -24,7 +24,7 @@ export default function EventCard({ event, layout = 'carousel' }) {
   const widthClass =
     layout === 'grid'
       ? 'h-full min-w-0 w-full max-w-none'
-      : 'w-[min(13rem,calc(100vw-2.5rem))] shrink-0 sm:w-52';
+      : 'w-[min(13rem,calc(100vw-2.5rem))] shrink-0 sm:w-52 lg:w-[calc((100%_-_3rem)/4.5)]';
 
   function handleClick(e) {
     if (!hasId) return;
