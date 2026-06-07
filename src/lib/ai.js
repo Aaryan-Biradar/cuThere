@@ -79,12 +79,10 @@ ${buildingMapLines}
         Expected JSON format:
         {
             "eventName": "...",
-            "hostOrgName": "...",
             "description": "...",
             "date": "...",
             "time": "...",
             "location": "...",
-            "hasFreeFood": true/false,
             "tags": ["Tech & Software", "Free Food"]
         }
     `;
