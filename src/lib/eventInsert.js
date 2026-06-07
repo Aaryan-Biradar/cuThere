@@ -1,4 +1,5 @@
 import db from './db.js';
+import { UNTITLED_EVENT, DATE_TBA, TIME_TBA, LOCATION_TBA } from './placeholders.js';
 
 /**
  * Calculates the correct year for an event based on the post's timestamp.
@@ -68,11 +69,11 @@ export async function insertEventToDatabase(eventData, postId, { ownerUsername, 
             `,
             args: [
                 newEventId,
-                eventData.eventName || 'Untitled Event',
+                eventData.eventName || UNTITLED_EVENT,
                 caption,
-                eventData.date || 'Date TBA',
-                eventData.time || 'Time TBA',
-                eventData.location || 'Location TBA',
+                eventData.date || DATE_TBA,
+                eventData.time || TIME_TBA,
+                eventData.location || LOCATION_TBA,
                 displayUrl,
                 postUrl || null,
                 postTimestamp || null
