@@ -92,9 +92,23 @@ export function SiteFooter({ className = '' }) {
             <LinkedInIcon />
           </a>
         </div>
-        <p className="font-sans text-[10px] font-medium tracking-widest text-[#9CA3AF]">
-          © {year} cuThere
-        </p>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <a
+            href="/privacy"
+            className="font-sans text-[11px] font-semibold text-[#6B7280] transition hover:text-[#111827]"
+          >
+            Privacy
+          </a>
+          <a
+            href="/terms"
+            className="font-sans text-[11px] font-semibold text-[#6B7280] transition hover:text-[#111827]"
+          >
+            Terms
+          </a>
+          <p className="font-sans text-[10px] font-medium tracking-widest text-[#9CA3AF]">
+            © {year} cuThere
+          </p>
+        </div>
       </div>
     </footer>
   );
