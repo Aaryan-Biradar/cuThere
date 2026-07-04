@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import posthog from 'posthog-js';
 import { formatEventDateTime, parseEventDate } from '@/lib/eventDateUtils';
 import { DEFAULT_EVENT_LOCATION, UNTITLED_EVENT } from '@/lib/copy';
 
@@ -30,12 +29,6 @@ export default function EventCard({ event, layout = 'carousel' }) {
   function handleClick(e) {
     if (!hasId) return;
     e.preventDefault();
-    posthog.capture('event_card_clicked', {
-      event_id: event?.id,
-      event_title: event?.title || UNTITLED_EVENT,
-      event_date: event?.date || event?.event_date,
-      layout,
-    });
     router.push(eventHref);
   }
 

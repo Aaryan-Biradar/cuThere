@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import posthog from 'posthog-js';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { ChevronLeftIcon } from '@/components/icons';
 import { formatEventDateTime, parseEventDate } from '@/lib/eventDateUtils';
@@ -116,16 +115,10 @@ export default function EventDetailPage() {
     }
     const label = event.title?.trim() || UNTITLED_EVENT;
     document.title = `${label} — cuThere`;
-    posthog.capture('event_detail_viewed', {
-      event_id: id,
-      event_title: label,
-      event_date: event.date || event.event_date,
-      event_location: event.location,
-    });
     return () => {
       document.title = DEFAULT_DOCUMENT_TITLE;
     };
-  }, [event, id]);
+  }, [event]);
 
   const shell = (children, { hideFooterOnMobile } = {}) => (
     <div className="flex min-h-screen flex-col bg-brand-cream text-[#111827] [font-family:var(--font-brand-sans)]">
@@ -218,11 +211,6 @@ export default function EventDetailPage() {
         href={event.postUrl}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() => posthog.capture('instagram_post_clicked', {
-          event_id: id,
-          event_title: event.title || UNTITLED_EVENT,
-          post_url: event.postUrl,
-        })}
         className="flex min-w-0 flex-1 shrink items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-1 py-2.5 text-xs font-bold text-[#111827] transition hover:bg-gray-50 sm:gap-2 sm:px-2 sm:py-3 sm:text-sm box-border"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
