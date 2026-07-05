@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import db from '@/lib/db';
-import { EVENT_SELECT_BASE, mapEventRow, EVENTS_REVALIDATE_SECONDS } from '@/lib/events';
+import db from '@/lib/server/db';
+import { EVENT_SELECT_BASE, mapEventRow, EVENTS_REVALIDATE_SECONDS } from '@/lib/server/events';
 
 // Keep the route dynamic (runs per request, no build-time static generation / build-time DB call);
 // the DB read below is what's cached, via unstable_cache + the 'events' tag.

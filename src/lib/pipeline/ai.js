@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
 import { readFileSync } from 'node:fs';
-import db from './db.js';
+import db from '../server/db.js';
 
 // Initialize the AI with your API key
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -11,7 +11,7 @@ const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 // Load the Carleton building-code map once at module level (ESM-safe fs read)
 const buildingMap = JSON.parse(
-    readFileSync(new URL('../../config/buildings.json', import.meta.url), 'utf8')
+    readFileSync(new URL('../../../config/buildings.json', import.meta.url), 'utf8')
 );
 
 // Build the prompt lines for the building map dynamically from the JSON config

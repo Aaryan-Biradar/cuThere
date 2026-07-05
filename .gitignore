@@ -29,7 +29,6 @@ data/*.db
 /public/workbox-*.js.map
 /public/worker-*.js
 /public/fallback-*.js
-.env.local
 
 # Amplitude wizard
 .amplitude/dashboard.json

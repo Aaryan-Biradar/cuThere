@@ -1,4 +1,4 @@
-import db from '../src/lib/db.js';
+import db from '../src/lib/server/db.js';
 
 /**
  * Additive, NON-destructive migration for duplicate-event detection.

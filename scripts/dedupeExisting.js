@@ -1,14 +1,14 @@
-import db from '../src/lib/db.js';
-import { findDuplicateAndMerge } from '../src/lib/ai.js';
-import { applyMerge } from '../src/lib/eventMerge.js';
+import db from '../src/lib/server/db.js';
+import { findDuplicateAndMerge } from '../src/lib/pipeline/ai.js';
+import { applyMerge } from '../src/lib/pipeline/eventMerge.js';
 import {
     titleSimilarity,
     locationSimilarity,
     isPlaceholder,
     SAME_ACCOUNT_CONFIRM_MIN,
     CROSS_ACCOUNT_CONFIRM_MIN,
-} from '../src/lib/dedup.js';
-import { wait, withRetry } from '../src/lib/retry.js';
+} from '../src/lib/pipeline/dedup.js';
+import { wait, withRetry } from '../src/lib/pipeline/retry.js';
 
 /**
  * ONE-TIME backfill: find & merge duplicate events ALREADY in the DB.

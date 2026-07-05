@@ -1,4 +1,4 @@
-import db from './db.js';
+import db from '../server/db.js';
 import { UNTITLED_EVENT, DATE_TBA, TIME_TBA, LOCATION_TBA } from './placeholders.js';
 
 /**

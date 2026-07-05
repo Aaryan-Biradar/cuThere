@@ -1,4 +1,4 @@
-import defaultDb from './db.js';
+import defaultDb from '../server/db.js';
 import { isReal } from './placeholders.js';
 
 /**

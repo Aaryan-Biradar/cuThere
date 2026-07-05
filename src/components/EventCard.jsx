@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { formatEventDateTime, parseEventDate } from '@/lib/eventDateUtils';
-import { DEFAULT_EVENT_LOCATION, UNTITLED_EVENT } from '@/lib/copy';
+import { formatEventDateTime, parseEventDate } from '@/lib/client/eventDateUtils';
+import { DEFAULT_EVENT_LOCATION, UNTITLED_EVENT } from '@/lib/client/copy';
 
 function isTodayEvent(dateString) {
   const eventDate = parseEventDate(dateString);
