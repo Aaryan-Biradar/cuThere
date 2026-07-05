@@ -9,6 +9,8 @@ import {
     CROSS_ACCOUNT_CONFIRM_MIN,
 } from '../src/lib/pipeline/dedup.js';
 import { wait, withRetry } from '../src/lib/pipeline/retry.js';
+import { ISO_DATE, DATE_TBA } from '../src/lib/pipeline/placeholders.js';
+import { parseJsonArray } from '../src/lib/server/events.js';
 
 /**
  * ONE-TIME backfill: find & merge duplicate events ALREADY in the DB.
@@ -78,7 +80,6 @@ async function loadEvents() {
         GROUP BY e.event_id
     `)).rows;
 
-    const parseArr = (s) => { try { return JSON.parse(s || '[]').filter(Boolean); } catch { return []; } };
     return rows.map((r) => ({
         event_id: r.event_id,
         event_title: r.event_title,
@@ -89,8 +90,8 @@ async function loadEvents() {
         displayUrl: r.displayUrl,
         postUrl: r.postUrl,
         post_timestamp: r.post_timestamp,
-        hosts: parseArr(r.host_ids),
-        tags: parseArr(r.tags),
+        hosts: parseJsonArray(r.host_ids),
+        tags: parseJsonArray(r.tags),
         rsvp_count: Number(r.rsvp_count) || 0,
     }));
 }
@@ -191,7 +192,6 @@ function asIncoming(e) {
     };
 }
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // The AI sometimes fabricates a year for un-normalized dates ("April 29" -> "2024-04-29").
 // Choose the merged date deterministically from the cluster members instead: prefer the newest
@@ -202,7 +202,7 @@ function bestDate(members) {
     if (iso.length) return iso[iso.length - 1].event_date;
     const real = sorted.filter((m) => !isPlaceholder(m.event_date));
     if (real.length) return real[real.length - 1].event_date;
-    return 'Date TBA';
+    return DATE_TBA;
 }
 
 async function confirmCluster(cluster) {

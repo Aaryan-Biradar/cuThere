@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { LocationPinIcon } from '@/components/icons';
 import { formatEventDateTime, parseEventDate } from '@/lib/client/eventDateUtils';
 import { DEFAULT_EVENT_LOCATION, UNTITLED_EVENT } from '@/lib/client/copy';
 
@@ -16,7 +17,6 @@ function isTodayEvent(dateString) {
 }
 
 export default function EventCard({ event, layout = 'carousel' }) {
-  const router = useRouter();
   const hasId = event?.id != null && event?.id !== '';
   const showTodayBadge = isTodayEvent(event?.date || event?.event_date);
   const eventHref = hasId ? `/events/${encodeURIComponent(String(event.id))}` : '#';
@@ -26,16 +26,12 @@ export default function EventCard({ event, layout = 'carousel' }) {
       ? 'h-full min-w-0 w-full max-w-none'
       : 'w-[min(13rem,calc(100vw-2.5rem))] shrink-0 sm:w-52 lg:w-[calc((100%_-_3rem)/4.5)]';
 
-  function handleClick(e) {
-    if (!hasId) return;
-    e.preventDefault();
-    router.push(eventHref);
-  }
-
   return (
-    <a
+    <Link
       href={eventHref}
-      onClick={handleClick}
+      onClick={(e) => {
+        if (!hasId) e.preventDefault();
+      }}
       className={`group block cursor-pointer overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(17,24,39,0.04)] transition hover:-translate-y-0.5 ${widthClass}`}
       aria-label={`Open event: ${event?.title || UNTITLED_EVENT}`}
     >
@@ -60,19 +56,10 @@ export default function EventCard({ event, layout = 'carousel' }) {
           {formatEventDateTime(event?.date || event?.event_date, event?.time, { omitYearIfCurrent: true })}
         </p>
         <p className="inline-flex line-clamp-1 items-center gap-1.5 font-sans text-xs font-medium text-[#6B7280]">
-          <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#9CA3AF]" fill="none" aria-hidden="true">
-            <path
-              d="M12 21s6-5.8 6-11a6 6 0 10-12 0c0 5.2 6 11 6 11z"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.7" />
-          </svg>
+          <LocationPinIcon className="h-4 w-4 text-[#9CA3AF]" />
           {event?.location || DEFAULT_EVENT_LOCATION}
         </p>
       </div>
-    </a>
+    </Link>
   );
 }

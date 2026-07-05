@@ -1,5 +1,6 @@
 import db from '../server/db.js';
-import { isPlaceholder } from './placeholders.js';
+import { isPlaceholder, ISO_DATE } from './placeholders.js';
+import { parseJsonArray } from '../server/events.js';
 
 /**
  * Duplicate-event candidate prefilter + dependency-free string similarity.
@@ -20,7 +21,6 @@ const CROSS_ACCOUNT_TITLE_MIN = 0.60;    // strict: different orgs, similar name
 const CROSS_ACCOUNT_LOCATION_MIN = 0.60;
 const MAX_CANDIDATES_PER_PATH = 5;
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const STOPWORDS = new Set(['the', 'a', 'an', 'and', 'of', 'at', 'in', 'on', 'for', 'to', 'event', 'carleton', 'cu', 'university']);
 
 // Re-export so existing dedup consumers keep importing isPlaceholder from here.
@@ -95,11 +95,8 @@ function dateWindow(normalizedDate) {
     return [fmt(minus), normalizedDate, fmt(plus)];
 }
 
-// One row → a normalized candidate object (mirrors how the read APIs parse json_group_array).
+// One row → a normalized candidate object (same json_group_array parsing as the read APIs).
 function hydrate(row) {
-    const parseArr = (s) => {
-        try { return JSON.parse(s || '[]').filter(Boolean); } catch { return []; }
-    };
     return {
         event_id: row.event_id,
         event_title: row.event_title,
@@ -110,8 +107,8 @@ function hydrate(row) {
         displayUrl: row.displayUrl,
         postUrl: row.postUrl,
         post_timestamp: row.post_timestamp,
-        hosts: parseArr(row.host_ids),
-        tags: parseArr(row.tags),
+        hosts: parseJsonArray(row.host_ids),
+        tags: parseJsonArray(row.tags),
     };
 }
 

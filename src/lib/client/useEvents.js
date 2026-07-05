@@ -69,13 +69,10 @@ export function useEvents() {
         const res = await fetch('/api/events');
         const data = await res.json();
         if (Array.isArray(data)) {
-          const normalized = data.map((event) => ({
-            ...event,
-            category: event.category || event.source_platform || 'Uncategorized',
-            tags: event.tags || [event.category || event.source_platform || 'Uncategorized'],
-          }));
-          setEvents(normalized);
-          setCachedEvents(normalized);
+          // /api/events rows come pre-normalized by mapEventRow (tags always an array,
+          // category always set), so they're usable as-is.
+          setEvents(data);
+          setCachedEvents(data);
         } else if (getCachedEvents() === null) {
           setEvents([]);
         }

@@ -3,11 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { ChevronLeftIcon } from '@/components/icons';
-import { formatEventDateTime, parseEventDate } from '@/lib/client/eventDateUtils';
+import { BackLink, SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import { ChevronLeftIcon, LocationPinIcon } from '@/components/icons';
+import {
+  estimateEndTime,
+  formatEventDateTime,
+  nextIsoDate,
+  normalizeToIsoDate,
+  to24Hour,
+} from '@/lib/client/eventDateUtils';
 import { getCachedEvent, setCachedEvent } from '@/lib/client/eventsCache';
-import { DEFAULT_EVENT_IMAGE, UNTITLED_EVENT } from '@/lib/client/copy';
+import { DEFAULT_EVENT_IMAGE, SITE_TITLE, UNTITLED_EVENT } from '@/lib/client/copy';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,
@@ -21,42 +27,6 @@ const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
     </button>
   ),
 });
-
-/**
- * Converts a 12-hour time string (e.g. "6:00 PM", "11:30 AM") to
- * 24-hour HH:mm format (e.g. "18:00", "11:30").
- * Returns null if the string can't be parsed.
- */
-function to24Hour(timeStr) {
-  if (!timeStr) return null;
-  const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!match) {
-    // Already in 24h format like "18:00"?
-    const mil = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})$/);
-    if (mil) return `${mil[1].padStart(2, '0')}:${mil[2]}`;
-    return null;
-  }
-  let [, hours, minutes, period] = match;
-  hours = Number(hours);
-  if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
-  if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
-  return `${String(hours).padStart(2, '0')}:${minutes}`;
-}
-
-/**
- * Given a start time in HH:mm, returns an end time 90 minutes (1.5 hours) later,
- * wrapping past midnight. e.g. "23:30" -> "01:00".
- */
-function estimateEndTime(startTime24) {
-  if (!startTime24) return null;
-  const [h, m] = startTime24.split(':').map(Number);
-  const end = (h * 60 + m + 90) % (24 * 60);
-  const endHour = Math.floor(end / 60);
-  const endMin = end % 60;
-  return `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-}
-
-const DEFAULT_DOCUMENT_TITLE = 'cuThere — Discover Local Events';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -110,13 +80,13 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!event || event.error) {
-      document.title = DEFAULT_DOCUMENT_TITLE;
+      document.title = SITE_TITLE;
       return undefined;
     }
     const label = event.title?.trim() || UNTITLED_EVENT;
     document.title = `${label} — cuThere`;
     return () => {
-      document.title = DEFAULT_DOCUMENT_TITLE;
+      document.title = SITE_TITLE;
     };
   }, [event]);
 
@@ -171,26 +141,13 @@ export default function EventDetailPage() {
   const imageSrc = event.displayUrl || DEFAULT_EVENT_IMAGE;
 
   const startTime24 = to24Hour(event.time);
-  const endTime24 = estimateEndTime(startTime24);
-  const calendarDate = event.date || event.event_date || '';
+  const estimatedEnd = estimateEndTime(startTime24);
 
-  // Normalize whatever date format we have into YYYY-MM-DD for the calendar button,
-  // reusing the shared parser (handles ISO, "Month Day", ordinals, academic-year pivot).
-  let parsedDateStr = '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(calendarDate)) {
-    parsedDateStr = calendarDate;
-  } else {
-    const parsed = parseEventDate(calendarDate);
-    if (parsed) {
-      const y = parsed.getFullYear();
-      const mo = String(parsed.getMonth() + 1).padStart(2, '0');
-      const d = String(parsed.getDate()).padStart(2, '0');
-      parsedDateStr = `${y}-${mo}-${d}`;
-    }
-  }
-
+  // Normalize whatever date format we have into YYYY-MM-DD for the calendar button
+  // (handles ISO passthrough, "Month Day", ordinals, academic-year pivot).
+  const parsedDateStr = normalizeToIsoDate(event.date || event.event_date);
   // Only pass times if we have a valid YYYY-MM-DD date and a parseable time
-  const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(parsedDateStr);
+  const hasValidDate = Boolean(parsedDateStr);
 
   const eventButtons = (
     <div className="flex w-full min-w-0 flex-row flex-nowrap gap-2 sm:gap-3">
@@ -201,7 +158,10 @@ export default function EventDetailPage() {
           location={event.location || ''}
           {...(hasValidDate ? { startDate: parsedDateStr } : {})}
           {...(hasValidDate && startTime24 ? { startTime: startTime24 } : {})}
-          {...(hasValidDate && endTime24 ? { endTime: endTime24 } : {})}
+          {...(hasValidDate && estimatedEnd ? { endTime: estimatedEnd.time } : {})}
+          {...(hasValidDate && estimatedEnd?.wrapsPastMidnight
+            ? { endDate: nextIsoDate(parsedDateStr) } // +90min estimate crossed midnight → ends the NEXT day
+            : {})}
           timeZone={process.env.NEXT_PUBLIC_TIMEZONE || 'America/Toronto'}
           description={event.description || ''}
           lightMode="light"
@@ -225,13 +185,7 @@ export default function EventDetailPage() {
     <main className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col lg:h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] lg:flex-row lg:overflow-hidden">
       {/* Mobile / tablet: full-width single column */}
       <article className="flex min-h-0 w-full min-w-0 flex-col px-4 pb-10 pt-8 sm:px-6 sm:pt-6 lg:order-1 lg:w-[60%] lg:overflow-y-auto lg:px-10 lg:py-16 lg:pr-12">
-        <a
-          href="/"
-          className="mb-4 inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827] lg:hidden"
-        >
-          <ChevronLeftIcon />
-          Back
-        </a>
+        <BackLink className="mb-4 inline-flex lg:hidden" />
 
         {/* Full-width image band on small screens */}
         <div className="relative -mx-4 mb-4 overflow-hidden bg-[#F8F9FA] sm:-mx-6 sm:rounded-2xl lg:hidden">
@@ -245,13 +199,7 @@ export default function EventDetailPage() {
         {/* Mobile / tablet: calendar + Instagram in one row, directly under the image */}
         <div className="mb-8 w-full min-w-0 lg:hidden">{eventButtons}</div>
 
-        <a
-          href="/"
-          className="mb-8 hidden w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827] lg:inline-flex"
-        >
-          <ChevronLeftIcon />
-          Back
-        </a>
+        <BackLink className="mb-8 hidden lg:inline-flex" />
 
         <div className="space-y-3 sm:space-y-4 lg:space-y-4">
           <h1 className="font-sans text-3xl font-black leading-tight tracking-tight text-[#111827] sm:text-4xl lg:text-5xl">
@@ -264,10 +212,7 @@ export default function EventDetailPage() {
             </p>
             {event.location && (
               <p className="inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-slate-500 sm:text-base">
-                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 21s6-5.8 6-11a6 6 0 10-12 0c0 5.2 6 11 6 11z" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="12" cy="10" r="2" />
-                </svg>
+                <LocationPinIcon className="h-4 w-4 shrink-0" strokeWidth={2} dotRadius={2} />
                 {event.location}
               </p>
             )}

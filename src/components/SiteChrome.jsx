@@ -1,5 +1,24 @@
 'use client';
 
+import { ChevronLeftIcon } from '@/components/icons';
+
+/**
+ * Chevron back link used across pages. The display utility lives in `className`
+ * (default `inline-flex`) so responsive variants like `hidden lg:inline-flex`
+ * can replace it without conflicting utilities.
+ */
+export function BackLink({ href = '/', children = 'Back', className = 'inline-flex' }) {
+  return (
+    <a
+      href={href}
+      className={`w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827] ${className}`}
+    >
+      <ChevronLeftIcon />
+      {children}
+    </a>
+  );
+}
+
 function LinkedInIcon({ className = 'h-5 w-5' }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
@@ -106,7 +125,8 @@ export function SiteFooter({ className = '' }) {
             Terms
           </a>
           <p className="font-sans text-[10px] font-medium tracking-widest text-[#9CA3AF]">
-            © {year} cuThere
+            {/* suppressHydrationWarning: statically-prerendered year can lag the client's after a year rollover */}
+            © <time suppressHydrationWarning>{year}</time> cuThere
           </p>
         </div>
       </div>

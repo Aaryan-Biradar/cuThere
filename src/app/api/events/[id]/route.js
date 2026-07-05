@@ -23,9 +23,7 @@ const getEventCore = unstable_cache(
       args: [id]
     });
     const eventRaw = eventResult.rows[0];
-    if (!eventRaw) return null;
-
-    return { event: mapEventRow(eventRaw) };
+    return eventRaw ? mapEventRow(eventRaw) : null;
   },
   ['event-core'],
   { tags: ['events'], revalidate: EVENTS_REVALIDATE_SECONDS }
@@ -35,17 +33,17 @@ export async function GET(_request, { params }) {
   const { id } = await params;
 
   try {
-    const core = await getEventCore(id); // cached
+    const event = await getEventCore(id); // cached
 
-    if (!core) {
+    if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     // RSVP count — kept LIVE (changes as users RSVP, so it isn't cached with the event)
-    const rsvp_count = await countRsvps(db, id);
+    const rsvp_count = await countRsvps(id);
 
     return NextResponse.json({
-      ...core.event,
+      ...event,
       rsvp_count,
     });
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import EventSection from '@/components/EventSection';
 import Hero from '@/components/Hero';
 import SearchAndPills from '@/components/SearchAndPills';
@@ -17,14 +17,22 @@ export default function HomePage() {
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  // Monotonic submit token: only the LATEST submit may write results/spinner state,
+  // so a slow earlier response can't land under a newer query's heading.
+  const searchRequestRef = useRef(0);
 
   async function handleSearchSubmit(e) {
     if (e) e.preventDefault();
     const query = searchQuery.trim();
     setActiveSearchQuery(query);
 
+    const reqId = ++searchRequestRef.current;
+
     if (!query) {
+      // Settle state here: any in-flight request is now stale and will never
+      // touch state again (including clearing the spinner).
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
@@ -32,12 +40,14 @@ export default function HomePage() {
     try {
       const res = await fetch(`/api/events/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
+      if (reqId !== searchRequestRef.current) return;
       setSearchResults(data);
     } catch (err) {
+      if (reqId !== searchRequestRef.current) return;
       console.error(err);
       setSearchResults([]);
     } finally {
-      setIsSearching(false);
+      if (reqId === searchRequestRef.current) setIsSearching(false);
     }
   }
 

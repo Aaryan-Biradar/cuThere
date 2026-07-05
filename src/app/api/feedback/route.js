@@ -21,13 +21,16 @@ export async function POST(request) {
     }
 
     // ── Build Discord Embed ─────────────────────────────────────────
+    // Coerce + truncate like the feedback field: a non-string email would throw, and Discord
+    // rejects embed field values over 1024 chars with a 400.
+    const from = (typeof email === 'string' && email.trim()) ? email.trim().slice(0, 1024) : 'Anonymous';
     const embed = {
       title: '📬 New Feedback',
       color: 0xd71920, // cuThere brand red
       fields: [
         {
           name: '👤 From',
-          value: email?.trim() || 'Anonymous',
+          value: from,
           inline: true,
         },
         {

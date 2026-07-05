@@ -43,7 +43,7 @@ export async function POST(request) {
     });
 
     // Get updated RSVP count (real count, or 0 on error — never a fake default)
-    const rsvp_count = await countRsvps(db, event_id);
+    const rsvp_count = await countRsvps(event_id);
 
     return NextResponse.json({ message: 'RSVP created', rsvp_count }, { status: 201 });
   } catch (error) {
@@ -68,7 +68,7 @@ export async function DELETE(request) {
     });
 
     // Get updated RSVP count (real count, or 0 on error)
-    const rsvp_count = await countRsvps(db, event_id);
+    const rsvp_count = await countRsvps(event_id);
 
     return NextResponse.json({ message: 'RSVP removed', rsvp_count }, { status: 200 });
   } catch (error) {

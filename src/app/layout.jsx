@@ -1,7 +1,8 @@
 import './globals.css';
+import { SITE_TITLE } from '@/lib/client/copy';
 
 export const metadata = {
-    title: 'cuThere — Discover Local Events',
+    title: SITE_TITLE,
     description: 'Browse and RSVP to campus events instantly.',
     manifest: '/manifest.json',
     icons: {

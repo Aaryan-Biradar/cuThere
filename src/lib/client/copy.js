@@ -4,6 +4,9 @@
  * for a few strings that were previously duplicated inline.
  */
 
+/** Site title used for the root layout metadata and as the default document.title. */
+export const SITE_TITLE = 'cuThere — Discover Local Events';
+
 /** Fallback title when an event has no usable title. */
 export const UNTITLED_EVENT = 'Untitled Event';
 
