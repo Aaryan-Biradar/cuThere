@@ -6,7 +6,7 @@
 
 **🔗 Live at [cuThere.app](https://cuthere.app)**
 
-Find out what's happening at **Carleton University** — without scrolling through 140 club Instagram accounts.
+Find out what's happening at **Carleton University** — without scrolling through 120+ club Instagram accounts.
 
 cuThere scrapes campus club posts, uses AI to pick out the real events and pull their details, and shows them in one clean, searchable web app.
 
@@ -14,7 +14,7 @@ cuThere scrapes campus club posts, uses AI to pick out the real events and pull 
 
 Every day, an automated job:
 
-1. Pulls the latest Instagram post from ~140 Carleton clubs (via Apify)
+1. Pulls the latest Instagram post from 120+ Carleton clubs (via Apify)
 2. Asks Google Gemini *"is this an event?"* — and if so, extracts the title, date, time, location, host, and tags
 3. Saves the event to the database and stores the flyer image
 

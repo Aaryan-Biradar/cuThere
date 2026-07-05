@@ -46,8 +46,16 @@ export async function isEvent(imageBuffer, caption) {
         ]
     });
 
-    const answer = response.text.trim().toLowerCase();
-    return answer === 'yes';
+    // Word-boundary match: accepts formatting drift like "Yes." or "**yes**" while still
+    // rejecting "no"/empty/garbage. A false "no" is irreversible (the post gets blacklisted
+    // in IGNORED_POST), so leniency on the "yes" side is the safer asymmetry.
+    const answer = (response.text ?? '').trim().toLowerCase();
+    return /\byes\b/.test(answer);
+}
+
+// Gemini often wraps JSON replies in markdown fences; strip them before parsing.
+function parseGeminiJson(text) {
+    return JSON.parse(text.replace(/```(json)?\n?/g, '').replace(/```/g, '').trim());
 }
 
 // Now accepts a raw ArrayBuffer instead of fetching from a URL
@@ -103,10 +111,7 @@ ${buildingMapLines}
     // 4. Boom! You have your structured data.
     console.log("🤖 Gemini raw response:", response.text);
 
-    // Gemini often wraps JSON in markdown blocks, so we strip them before parsing
-    const cleanText = response.text.replace(/```(json)?\n?/g, '').replace(/```/g, '').trim();
-
-    return JSON.parse(cleanText);
+    return parseGeminiJson(response.text);
 }
 
 
@@ -207,8 +212,7 @@ export async function findDuplicateAndMerge({ incoming, candidates }) {
         contents: [prompt],
     });
 
-    const cleanText = response.text.replace(/```(json)?\n?/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleanText);
+    const parsed = parseGeminiJson(response.text);
 
     // Resolve the short ref back to the precise event_id locally — avoids JSON number-precision loss
     // on 19-digit Instagram ids that Gemini might echo unquoted.

@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/server/db';
 import { EVENT_SELECT_BASE, mapEventRow } from '@/lib/server/events';
 
-// Columns matched against the (lowercased) search query, in OR. Mirror of the old hand-written
-// LOWER(col) LIKE ? list — same columns, same behavior (org_id included).
+// Columns matched against the (lowercased) search query, in OR. These use the matching
+// subquery's own aliases (e2/c2/o2), NOT the outer aggregate's — see the WHERE note below.
 const SEARCH_COLUMNS = [
-  'e.event_title',
-  'e.event_description',
-  'e.event_location',
-  'c.category_name',
-  'o.org_name',
-  'o.org_id',
+  'e2.event_title',
+  'e2.event_description',
+  'e2.event_location',
+  'c2.category_name',
+  'o2.org_name',
+  'o2.org_id',
 ];
 
 // GET /api/events/search?q=query
@@ -24,15 +24,28 @@ export async function GET(request) {
       return NextResponse.json([]);
     }
 
-    const searchQuery = `%${q.toLowerCase()}%`;
-    const whereClause = SEARCH_COLUMNS.map(col => `LOWER(${col}) LIKE ?`).join('\n           OR ');
+    // Escape LIKE metacharacters so "%"/"_" in the query match literally instead of acting
+    // as wildcards (a bare "%" would otherwise return the whole table).
+    const escaped = q.toLowerCase().replace(/[\\%_]/g, (m) => `\\${m}`);
+    const searchQuery = `%${escaped}%`;
+    const whereClause = SEARCH_COLUMNS.map(col => `LOWER(${col}) LIKE ? ESCAPE '\\'`).join('\n               OR ');
 
-    // Grouping by event_id ensures we only return unique events
-    // even if multiple tags/hosts match the query strings snippet.
+    // Matching happens in an IN-subquery, NOT in the outer WHERE: SQL applies WHERE before
+    // aggregation, so filtering the outer join rows directly would drop the non-matching
+    // rows from json_group_array — an event matched only via one tag would come back with
+    // truncated tags/hosts (and a different category) than /api/events returns for it.
     const result = await db.execute({
       sql: `
         ${EVENT_SELECT_BASE}
-        WHERE ${whereClause}
+        WHERE e.event_id IN (
+          SELECT e2.event_id
+          FROM EVENT e2
+          LEFT JOIN CATEGORIZED_AS et2 ON e2.event_id = et2.event_id
+          LEFT JOIN CATEGORY c2 ON et2.category_id = c2.category_id
+          LEFT JOIN HOSTS eh2 ON e2.event_id = eh2.event_id
+          LEFT JOIN ORGANIZATION o2 ON eh2.org_id = o2.org_id
+          WHERE ${whereClause}
+        )
         GROUP BY e.event_id
         ORDER BY e.event_date ASC
       `,

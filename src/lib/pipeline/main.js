@@ -5,6 +5,7 @@ import { insertEventToDatabase, normalizeEventDate } from './eventInsert.js';
 import { findCandidates, SAME_ACCOUNT_CONFIRM_MIN, CROSS_ACCOUNT_CONFIRM_MIN } from './dedup.js';
 import { applyMerge } from './eventMerge.js';
 import { wait, withRetry } from './retry.js';
+import { buildHosts } from './hosts.js';
 import db from '../server/db.js';
 
 async function runPipeline() {
@@ -51,6 +52,12 @@ async function runPipeline() {
         // STEP 2.5: Fetch the image ONCE — we'll reuse this buffer for AI + Blob upload
         console.log("   📸 Fetching event flyer image...");
         const imageResponse = await fetch(post.displayUrl);
+        if (!imageResponse.ok) {
+            // Expired/broken CDN URL. Skip this run WITHOUT blacklisting: feeding the error-page
+            // bytes to Gemini could mark a real event as "not an event" (permanent IGNORED_POST
+            // entry) or store garbage bytes as the permanent flyer.
+            throw new Error(`Flyer fetch failed (${imageResponse.status}) for ${post.displayUrl}`);
+        }
         const imageBuffer = await imageResponse.arrayBuffer();
 
         // STEP 3: Filter — ask Gemini if this is actually an event
@@ -90,10 +97,8 @@ async function runPipeline() {
         console.log(`   🔗 Permanent URL: ${permanentImageUrl}`);
 
         // STEP 6: Detect duplicates, then either MERGE into an existing event or INSERT a new one
-        const hostUsernames = [
-            post.ownerUsername,
-            ...((post.coauthorProducers || []).map((c) => c.username)),
-        ].filter(Boolean);
+        const hostUsernames = buildHosts(post.ownerUsername, post.ownerFullName, post.coauthorProducers)
+            .map((h) => h.username);
 
         try {
             // Cheap prefilter first — only spend a Gemini call when there's something to compare against.
@@ -165,4 +170,9 @@ async function runPipeline() {
     console.log(`\n=== ✅ Pipeline Complete! ===`);
 }
 
-runPipeline().catch(console.error);
+runPipeline().catch((err) => {
+    // Fatal (pre-loop) failure — e.g. all Apify keys exhausted or DB unreachable.
+    // Exit non-zero so the daily GitHub Actions run shows red instead of a silent green.
+    console.error(err);
+    process.exitCode = 1;
+});

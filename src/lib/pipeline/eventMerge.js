@@ -1,5 +1,6 @@
 import defaultDb from '../server/db.js';
-import { isReal } from './placeholders.js';
+import { isReal, ISO_DATE } from './placeholders.js';
+import { buildHosts, hostLinkStatements, resolveCategoryIds } from './hosts.js';
 
 /**
  * Merge a confirmed-duplicate post into a surviving EVENT row.
@@ -17,8 +18,6 @@ import { isReal } from './placeholders.js';
 function pickValue(existing, proposed) {
     return isReal(proposed) ? proposed : existing;
 }
-
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Date-specific guard: never replace a real value with a placeholder; never downgrade a precise
 // ISO date (YYYY-MM-DD) to a vague string; if both are ISO with the SAME month-day, keep the
@@ -82,25 +81,12 @@ export async function applyMerge({ db = defaultDb, survivorEventId, merged, cont
 
     const now = new Date().toISOString();
 
-    // 2. Resolve category_ids for the merged (unioned) tag list — reads, done before the write batch.
-    const tagList = Array.isArray(m.tags) ? m.tags : [];
-    const categoryIds = [];
-    for (const tag of tagList) {
-        const r = await db.execute({
-            sql: `SELECT category_id FROM CATEGORY WHERE category_name = ?`,
-            args: [tag],
-        });
-        if (r.rows[0]) categoryIds.push(r.rows[0].category_id);
-    }
+    // 2. Resolve category_ids for the merged (unioned) tag list — reads, done before the write
+    // batch. Unknown tags are silently dropped here (the insert path is the one that warns).
+    const { categoryIds } = await resolveCategoryIds(db, m.tags);
 
-    // Owner + co-authors of the contributing post (same shape as eventInsert.js).
-    const allHosts = [
-        { username: contributingPost.ownerUsername, displayName: contributingPost.ownerFullName || contributingPost.ownerUsername },
-        ...(contributingPost.coauthorProducers || []).map((co) => ({
-            username: co.username,
-            displayName: co.fullName || co.username,
-        })),
-    ].filter((h) => h.username);
+    // Owner + co-authors of the contributing post (shared shape with eventInsert.js).
+    const allHosts = buildHosts(contributingPost.ownerUsername, contributingPost.ownerFullName, contributingPost.coauthorProducers);
 
     // 3. Build one atomic write batch.
     const stmts = [];
@@ -112,10 +98,7 @@ export async function applyMerge({ db = defaultDb, survivorEventId, merged, cont
         args: [title, description, date, time, location, displayUrl, postUrl, post_timestamp, now, survivorEventId],
     });
 
-    for (const host of allHosts) {
-        stmts.push({ sql: `INSERT OR IGNORE INTO ORGANIZATION (org_id, org_name) VALUES (?, ?)`, args: [host.username, host.displayName] });
-        stmts.push({ sql: `INSERT OR IGNORE INTO HOSTS (event_id, org_id) VALUES (?, ?)`, args: [survivorEventId, host.username] });
-    }
+    stmts.push(...hostLinkStatements(survivorEventId, allHosts));
 
     for (const cid of categoryIds) {
         stmts.push({ sql: `INSERT OR IGNORE INTO CATEGORIZED_AS (event_id, category_id) VALUES (?, ?)`, args: [survivorEventId, cid] });

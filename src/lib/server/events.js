@@ -1,3 +1,5 @@
+import db from './db.js';
+
 /**
  * Shared SQL + row mapping for the events API routes.
  *
@@ -35,8 +37,9 @@ export const EVENT_SELECT_BASE = `
 `;
 
 // Parse a json_group_array() string into a clean array, dropping the [null] / null entries
-// SQLite emits when a LEFT JOIN finds no match. Never throws.
-function parseJsonArray(str) {
+// SQLite emits when a LEFT JOIN finds no match. Never throws. Also used by the pipeline's
+// dedup path and scripts, which read the same aggregated shape.
+export function parseJsonArray(str) {
   try { return JSON.parse(str || '[]').filter(Boolean); } catch { return []; }
 }
 
@@ -63,7 +66,7 @@ export function mapEventRow(row) {
 
 // Live count of RSVPs for an event. Returns the real number, or 0 on any error (table missing,
 // query failure, etc.) so callers never default to a fake count.
-export async function countRsvps(db, eventId) {
+export async function countRsvps(eventId) {
   try {
     const result = await db.execute({
       sql: `SELECT count(*) as count FROM RSVPs WHERE event_id = ?`,

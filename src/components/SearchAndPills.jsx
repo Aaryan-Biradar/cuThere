@@ -27,6 +27,13 @@ export default function SearchAndPills({
       const delta = e.deltaY;
       const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
 
+      // Already at the limit in the wheel direction → let the page scroll normally
+      // instead of trapping the wheel. 1px tolerance: scrollLeft can be fractional
+      // on zoomed/HiDPI displays while scrollWidth/clientWidth are rounded.
+      const atStart = el.scrollLeft <= 0;
+      const atEnd = el.scrollLeft >= maxScroll - 1;
+      if ((delta > 0 && atEnd) || (delta < 0 && atStart)) return;
+
       el.scrollLeft = Math.min(maxScroll, Math.max(0, el.scrollLeft + delta));
       e.preventDefault();
     }

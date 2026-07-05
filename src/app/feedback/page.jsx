@@ -1,42 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { ChevronLeftIcon } from '@/components/icons';
-
-/** Toast notification that auto-dismisses */
-function Toast({ message, visible, onClose }) {
-  useEffect(() => {
-    if (!visible) return;
-    const timer = setTimeout(onClose, 4000);
-    return () => clearTimeout(timer);
-  }, [visible, onClose]);
-
-  return (
-    <div
-      className={`fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 transition-all duration-300 ${
-        visible
-          ? 'translate-y-0 opacity-100'
-          : 'pointer-events-none translate-y-4 opacity-0'
-      }`}
-    >
-      <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-lg">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <p className="text-sm font-semibold text-[#111827]">{message}</p>
-      </div>
-    </div>
-  );
-}
+import { useCallback, useState } from 'react';
+import { BackLink, SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import Toast from '@/components/Toast';
 
 export default function FeedbackPage() {
   const [email, setEmail] = useState('');
   const [feedback, setFeedback] = useState('');
   const [status, setStatus] = useState('idle'); // idle | submitting | success | error
   const [toastVisible, setToastVisible] = useState(false);
+  // Stable callback so Toast's auto-dismiss timer isn't restarted by unrelated re-renders.
+  const closeToast = useCallback(() => setToastVisible(false), []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -75,13 +49,7 @@ export default function FeedbackPage() {
 
       <main className="flex flex-1 flex-col px-4 pb-12 pt-[calc(env(safe-area-inset-top)+4.5rem)] sm:px-6 sm:pt-[calc(env(safe-area-inset-top)+5rem)] lg:px-12">
         <div className="mx-auto w-full max-w-lg">
-          <a
-            href="/"
-            className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827]"
-          >
-            <ChevronLeftIcon />
-            Back
-          </a>
+          <BackLink />
           <h1 className="mt-4 font-sans text-3xl font-black tracking-tight text-[#111827] sm:text-4xl">
             Feedback
           </h1>
@@ -100,13 +68,7 @@ export default function FeedbackPage() {
                 Your feedback has been sent to the team. We appreciate you helping us improve cuThere.
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-4">
-                <a
-                  href="/"
-                  className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#6B7280] transition hover:text-[#111827]"
-                >
-                  <ChevronLeftIcon />
-                  Back to events
-                </a>
+                <BackLink>Back to events</BackLink>
                 <button
                   type="button"
                   onClick={() => setStatus('idle')}
@@ -204,7 +166,7 @@ export default function FeedbackPage() {
       <Toast
         message="Feedback sent — thank you!"
         visible={toastVisible}
-        onClose={() => setToastVisible(false)}
+        onClose={closeToast}
       />
     </div>
   );
