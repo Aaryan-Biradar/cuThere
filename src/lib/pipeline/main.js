@@ -5,7 +5,7 @@ import { insertEventToDatabase, normalizeEventDate } from './eventInsert.js';
 import { findCandidates, SAME_ACCOUNT_CONFIRM_MIN, CROSS_ACCOUNT_CONFIRM_MIN } from './dedup.js';
 import { applyMerge } from './eventMerge.js';
 import { wait, withRetry } from './retry.js';
-import db from './db.js';
+import db from '../server/db.js';
 
 async function runPipeline() {
     console.log("=== 🚀 CuThere Pipeline Starting ===\n");

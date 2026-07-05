@@ -1,4 +1,4 @@
-import { DEFAULT_EVENT_IMAGE } from '@/lib/copy';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/client/copy';
 
 export default function Hero() {
   return (

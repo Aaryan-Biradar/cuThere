@@ -5,9 +5,9 @@ import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
 import { ChevronLeftIcon } from '@/components/icons';
-import { formatEventDateTime, parseEventDate } from '@/lib/eventDateUtils';
-import { getCachedEvent, setCachedEvent } from '@/lib/eventsCache';
-import { DEFAULT_EVENT_IMAGE, UNTITLED_EVENT } from '@/lib/copy';
+import { formatEventDateTime, parseEventDate } from '@/lib/client/eventDateUtils';
+import { getCachedEvent, setCachedEvent } from '@/lib/client/eventsCache';
+import { DEFAULT_EVENT_IMAGE, UNTITLED_EVENT } from '@/lib/client/copy';
 
 const CalendarButton = dynamic(() => import('@/components/CalendarButton'), {
   ssr: false,

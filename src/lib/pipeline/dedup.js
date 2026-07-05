@@ -1,4 +1,4 @@
-import db from './db.js';
+import db from '../server/db.js';
 import { isPlaceholder } from './placeholders.js';
 
 /**

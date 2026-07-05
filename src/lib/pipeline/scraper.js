@@ -15,7 +15,7 @@ const apifyKeys = Object.keys(process.env)
 
 // Load Instagram account list from config (deduped)
 const { accounts } = JSON.parse(
-    readFileSync(new URL('../../config/accounts.json', import.meta.url), 'utf8')
+    readFileSync(new URL('../../../config/accounts.json', import.meta.url), 'utf8')
 );
 
 // Prepare Actor input

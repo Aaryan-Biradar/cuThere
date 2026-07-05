@@ -1,4 +1,4 @@
-import db from '../src/lib/db.js';
+import db from '../src/lib/server/db.js';
 
 async function buildDatabase() {
     console.log("🚀 Booting up the Database Builder (Turso)...");

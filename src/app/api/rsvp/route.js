@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { countRsvps } from '@/lib/events';
+import db from '@/lib/server/db';
+import { countRsvps } from '@/lib/server/events';
 
 // POST /api/rsvp
 export async function POST(request) {

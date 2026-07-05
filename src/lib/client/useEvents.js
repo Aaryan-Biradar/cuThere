@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { parseEventDate } from '@/lib/eventDateUtils';
-import { getCachedEvents, setCachedEvents } from '@/lib/eventsCache';
+import { parseEventDate } from '@/lib/client/eventDateUtils';
+import { getCachedEvents, setCachedEvents } from '@/lib/client/eventsCache';
 
 const DEFAULT_TAG_PILLS = ['All'];
 // Tags pinned to the front of the list (right after the "This Week" section);

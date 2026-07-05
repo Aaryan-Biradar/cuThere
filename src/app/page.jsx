@@ -6,7 +6,7 @@ import Hero from '@/components/Hero';
 import SearchAndPills from '@/components/SearchAndPills';
 import SearchResultsSection from '@/components/SearchResultsSection';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { slugifySection, useEvents } from '@/lib/useEvents';
+import { slugifySection, useEvents } from '@/lib/client/useEvents';
 
 export default function HomePage() {
   const { loading, sections, pillLabels } = useEvents();

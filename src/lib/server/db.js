@@ -1,8 +1,6 @@
 import { createClient } from '@libsql/client';
-import dotenv from 'dotenv';
-
-// Load environment variables for standalone Node.js scripts
-dotenv.config({ path: '.env' });
+// Load .env for standalone Node.js scripts (no-op under Next.js, which loads it itself)
+import 'dotenv/config';
 
 // Lazily-created Turso client — deferred until first use so importing this
 // module at build/CI time (when TURSO_* env vars are absent) never throws.

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { EVENT_SELECT_BASE, mapEventRow } from '@/lib/events';
+import db from '@/lib/server/db';
+import { EVENT_SELECT_BASE, mapEventRow } from '@/lib/server/events';
 
 // Columns matched against the (lowercased) search query, in OR. Mirror of the old hand-written
 // LOWER(col) LIKE ? list — same columns, same behavior (org_id included).

@@ -30,23 +30,18 @@ Next.js 15 · React 19 · Tailwind CSS · Turso (libSQL) · Google Gemini · Api
 npm install
 ```
 
-Create a `.env` file:
+Create a `.env` file from the template and fill in your values — it's the single env file for the app, the scraper, and the scripts:
 
-```env
-TURSO_DATABASE_URL=
-TURSO_AUTH_TOKEN=
-GEMINI_API_KEY=
-BLOB_READ_WRITE_TOKEN=     # event flyer image storage
-APIFY_API_TOKEN_1=         # add _2.._4 to rotate keys
-DISCORD_WEBHOOK_URL=       # optional — powers the feedback form
+```bash
+cp .env.example .env
 ```
 
 Then:
 
 ```bash
-node scripts/cleanDB.js    # build + seed the database (first run only — wipes existing data)
-npm run dev                # start the app at http://localhost:3000
-node src/lib/main.js       # run the scraper to pull in events
+node scripts/cleanDB.js             # build + seed the database (first run only — wipes existing data)
+npm run dev                         # start the app at http://localhost:3000
+node src/lib/pipeline/main.js       # run the scraper to pull in events
 ```
 
 The scraper also runs on its own every day via GitHub Actions.

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import db from '@/lib/db';
+import db from '@/lib/server/db';
 import {
   EVENT_SELECT_BASE,
   mapEventRow,
   countRsvps,
   EVENTS_REVALIDATE_SECONDS,
-} from '@/lib/events';
+} from '@/lib/server/events';
 
 export const dynamic = 'force-dynamic';
 
